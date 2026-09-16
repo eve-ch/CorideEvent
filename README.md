@@ -1,2 +1,4 @@
 # CorideEvent
-A new feature for Coride.
+In Sweden, we are poor at ridesharing; often, there is only one person in the car—the driver. Can ridesharing lead to saved resources for both the environment and the wallet? The threshold for starting to rideshare and changing current habits can be high, so the question is: how can we encourage more people to rideshare?
+
+We want to develop a prototype of a feature, based on an existing system, that enables user matching for carpooling to events. The event organizer should be able to create a carpooling opportunity prior to an event and share it via a link. Users should be able to easily scan the code and fill in information regarding how they wish to carpool to and from the event. Afterwards, a summary of the trips should be generated. Furthermore, the developed feature must be seamlessly integrated with the system's APIs and Coride's backend. This, in turn, will lower the barrier for people to start carpooling and encourage more companies to use Coride's existing services.
