@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coride • Mina event</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f7f8;color:#193038;font:16px system-ui,sans-serif}header{background:#fff;border-bottom:1px solid #dce5e8;padding:22px max(24px,calc((100vw - 1000px)/2));display:flex;justify-content:space-between;align-items:center}header strong{font-size:24px;color:#087c70}main{max-width:1000px;margin:42px auto;padding:0 24px}h1{font-size:32px;margin:0 0 8px}h2{margin-top:0}.muted{color:#52676f}.toolbar{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:26px}button{border:0;border-radius:9px;padding:12px 18px;font:inherit;cursor:pointer;background:#087c70;color:white}button.secondary{background:#e9f0f1;color:#193038}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #e6a52e;outline-offset:3px}.panel{background:white;border:1px solid #dce5e8;border-radius:16px;padding:28px;margin-bottom:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}label{display:block;font-weight:600;margin-bottom:8px}input,textarea{width:100%;border:1px solid #aabcc2;border-radius:8px;padding:12px;font:inherit;background:white}textarea{min-height:120px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:12px;margin-top:26px}.badge{display:inline-block;background:#e3f3ee;color:#16604d;padding:5px 10px;border-radius:30px;font-size:14px}.card-top{display:flex;justify-content:space-between;gap:15px}.card-meta{display:flex;flex-wrap:wrap;gap:14px;margin:16px 0}.notice{font-size:14px;background:#eaf0f4;padding:14px;border-radius:10px;margin-bottom:28px}#message{color:#16604d}#error{color:#a32626}dl{display:grid;grid-template-columns:180px 1fr;gap:16px}dt{font-weight:600}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.description{white-space:pre-wrap;overflow-wrap:anywhere}[hidden]{display:none!important}@media(max-width:600px){.grid{grid-template-columns:1fr}.toolbar,.card-top{align-items:flex-start;flex-direction:column}dl{grid-template-columns:1fr;gap:8px}dd{margin-bottom:12px}header{padding:18px 24px}.panel{padding:20px}}
+</style>
+</head>
+<body>
+<header><strong>coride</strong><span>Arrangör</span></header>
+<main>
+<div class="notice">Lokal testversion: event sparas i databasen och tillhör testarrangören.</div>
+<p id="message" role="status" aria-live="polite"></p>
+<section id="list-view">
+<div class="toolbar"><div><h1>Mina event</h1><span class="muted">Skapa event och samla deltagarnas samåkning.</span></div><button id="new-event">+ Skapa event</button></div>
+<div id="events"></div>
+</section>
+<section id="form-view" hidden>
+<div class="toolbar"><div><h1>Skapa event</h1><span class="muted">Fyll i informationen om ditt event.</span></div></div>
+<form id="event-form" class="panel">
+<div class="grid">
+<div class="full"><label for="name">Eventnamn *</label><input id="name" name="name" required maxlength="200" placeholder="Till exempel: Höstkonferensen"></div>
+<div class="full"><label for="description">Beskrivning</label><textarea id="description" name="description" maxlength="5000" placeholder="Vad behöver deltagarna veta?"></textarea></div>
+<div class="full"><label for="location">Plats *</label><input id="location" name="eventLocation" required maxlength="300" placeholder="Adress eller platsens namn"></div>
+<div><label for="starts">Startdatum och tid *</label><input id="starts" name="startsAt" type="datetime-local" required></div>
+<div><label for="deadline">Sista anmälningsdag och tid *</label><input id="deadline" name="applicationDeadline" type="datetime-local" required></div>
+</div>
+<p class="muted">* Obligatoriskt fält. Tider anges i datorns lokala tidszon.</p>
+<p id="error" role="alert"></p>
+<div class="actions"><button type="submit">Spara event</button><button type="button" class="secondary" id="cancel">Avbryt</button></div>
+</form>
+</section>
+<section id="detail-view" hidden><button class="secondary" id="back">← Mina event</button><div class="panel" style="margin-top:24px"><h1 id="detail-name"></h1><p id="detail-description" class="description"></p><dl id="detail-fields"></dl></div></section>
+</main>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+let events = [];
+let saving = false;
+function show(view) {
+    for (const id of ['list-view', 'form-view', 'detail-view']) $(id).hidden = id !== view;
+    const heading = $(view).querySelector('h1');
+    heading.tabIndex = -1;
+    heading.focus();
+}
+function date(value) {
+    return new Intl.DateTimeFormat('sv-SE', {dateStyle:'medium', timeStyle:'short'}).format(new Date(value));
+}
+function node(tag, text, className) {
+    const element = document.createElement(tag);
+    element.textContent = text;
+    if (className) element.className = className;
+    return element;
+}
+async function api(options) {
+    let response;
+    try { response = await fetch('/api/events', options); }
+    catch { throw new Error('Ingen kontakt med servern. Kontrollera att den körs.'); }
+    let data;
+    try { data = await response.json(); }
+    catch { throw new Error('Servern gav ett oväntat svar. Kontrollera terminalen.'); }
+    if (!response.ok) throw new Error(data.message || 'Anropet misslyckades.');
+    return data;
+}
+function toView(event) {
+    return {
+        id:event.id, name:event.name, description:event.description,
+        eventLocation:event.event_location, startsAt:event.starts_at,
+        applicationDeadline:event.application_deadline, matchingStatus:event.matching_status
+    };
+}
+async function loadEvents() {
+    $('events').textContent = 'Hämtar event...';
+    try {
+        const data = await api();
+        if (!Array.isArray(data)) throw new Error('Servern returnerade ingen eventlista.');
+        events = data.map(toView);
+        render();
+    } catch (error) {
+        $('events').replaceChildren(node('p', 'Kunde inte hämta event. ' + error.message));
+        const retry = node('button', 'Försök igen', 'secondary');
+        retry.type = 'button';
+        retry.addEventListener('click', loadEvents);
+        $('events').append(retry);
+    }
+}
+function render() {
+    const container = $('events');
+    container.replaceChildren();
+    if (!events.length) {
+        const empty = node('div', '', 'panel');
+        empty.append(node('h2', 'Inga event ännu'), node('p', 'Klicka på Skapa event för att lägga till ditt första event.', 'muted'));
+        container.append(empty);
+        return;
+    }
+    for (const event of [...events].sort((a,b) => Date.parse(a.startsAt)-Date.parse(b.startsAt))) {
+        const card = node('article', '', 'panel');
+        const top = node('div', '', 'card-top');
+        const status = Date.now() <= Date.parse(event.applicationDeadline) ? 'Anmälan öppen' : 'Anmälan stängd';
+        top.append(node('h2', event.name), node('span', status, 'badge'));
+        const meta = node('div', '', 'card-meta');
+        meta.append(node('span', 'Plats: '+event.eventLocation), node('span', 'Start: '+date(event.startsAt)));
+        const button = node('button', 'Visa event', 'secondary');
+        button.type = 'button';
+        button.addEventListener('click', () => details(event));
+        card.append(top, meta, node('p', 'Sista anmälan: '+date(event.applicationDeadline), 'muted'), button);
+        container.append(card);
+    }
+}
+function details(event) {
+    $('detail-name').textContent = event.name;
+    $('detail-description').textContent = event.description || 'Ingen beskrivning angiven.';
+    const fields = $('detail-fields');
+    fields.replaceChildren();
+    for (const [label,value] of [
+        ['Plats',event.eventLocation], ['Start',date(event.startsAt)],
+        ['Sista anmälan',date(event.applicationDeadline)],
+        ['Matchning',event.matchingStatus === 'NOT_STARTED' ? 'Inte påbörjad' : event.matchingStatus]
+    ]) fields.append(node('dt',label), node('dd',value));
+    show('detail-view');
+}
+$('new-event').addEventListener('click', () => {
+    $('event-form').reset();
+    $('error').textContent = '';
+    $('message').textContent = '';
+    show('form-view');
+    $('name').focus();
+});
+for (const id of ['cancel','back']) $(id).addEventListener('click', () => {
+    show('list-view');
+    loadEvents();
+});
+$('event-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (saving) return;
+    $('error').textContent = '';
+    const formElement = e.currentTarget;
+    const form = new FormData(formElement);
+    const button = formElement.querySelector('[type="submit"]');
+    const starts = new Date(form.get('startsAt'));
+    const deadline = new Date(form.get('applicationDeadline'));
+    const name = form.get('name').trim();
+    const location = form.get('eventLocation').trim();
+    if (!name || !location) {
+        $('error').textContent = 'Ange eventnamn och plats.';
+        return;
+    }
+    if (!Number.isFinite(starts.getTime()) || !Number.isFinite(deadline.getTime())) {
+        $('error').textContent = 'Ange giltiga datum och tider.';
+        return;
+    }
+    if (starts <= new Date() || deadline > starts) {
+        $('error').textContent = 'Starten måste vara i framtiden och sista anmälan senast vid starten.';
+        return;
+    }
+    const input = {
+        name, description:form.get('description').trim(), eventLocation:location,
+        startsAt:starts.toISOString(), applicationDeadline:deadline.toISOString()
+    };
+    saving = true;
+    button.disabled = true;
+    button.textContent = 'Sparar...';
+    $('cancel').disabled = true;
+    try {
+        const saved = await api({method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(input)});
+        events.push(toView(saved));
+        render();
+        show('list-view');
+        $('message').textContent = 'Eventet har sparats i databasen.';
+        formElement.reset();
+    } catch (error) {
+        $('error').textContent = 'Kunde inte bekräfta att eventet sparades. ' + error.message + ' Kontrollera listan innan du försöker igen.';
+    } finally {
+        saving = false;
+        button.disabled = false;
+        button.textContent = 'Spara event';
+        $('cancel').disabled = false;
+    }
+});
+loadEvents();
+</script>
+</body>
+</html>
