@@ -6,8 +6,6 @@ export class TravelOption{
     private departureTime: Date;
     private direction: Direction;
 
-    private optionText: string; //Tillfällig
-
     constructor(id: string,
                 placeName: string,
                 departureTime: Date,
@@ -16,7 +14,6 @@ export class TravelOption{
         this.placeName = placeName;
         this.departureTime = departureTime;
         this.direction = direction;
-        this.optionText = optionText;
     }
 
     public isSameOption(other: TravelOption): boolean{

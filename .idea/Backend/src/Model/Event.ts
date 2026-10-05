@@ -1,4 +1,5 @@
 import {MatchingStatus} from '../Enums/MatchingStatus';
+import {TravelOption} from './TravelOption';
 
 export class Event{
     private id : string;

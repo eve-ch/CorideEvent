@@ -1,3 +1,5 @@
+import {Event} from './Event';
+
 export class Organizer{
     private id: string;
     private name: string;
@@ -21,15 +23,14 @@ export class Organizer{
     ): Event{
         const eventId = crypto.randomUUID();
         const shareToken = crypto.randomUUID();
-        const newEvent :Event = new Event(eventId,
+        return new Event(
+            eventId,
             name,
             description,
             eventLocation,
             startsAt,
             applicationDeadline,
             shareToken);
-
-        return newEvent;
 
     }
 
