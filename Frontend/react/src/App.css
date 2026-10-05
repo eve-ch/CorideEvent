@@ -1,0 +1,193 @@
+.app {
+  max-width: 760px;
+  min-height: 100vh;
+  margin: auto;
+  background: #eff8fd;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  background: white;
+}
+
+.logo {
+  color: #198bc3;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.logo span {
+  color: #8bc53f;
+}
+
+.organizer-label {
+  padding: 10px 16px;
+  border-radius: 30px;
+  background: #eaf6fd;
+  color: #198bc3;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.page-title {
+  padding: 24px;
+  text-align: center;
+  background: white;
+  border-bottom: 1px solid #d9edf8;
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+main {
+  padding: 24px;
+}
+
+.notice {
+  color: #638396;
+  font-size: 13px;
+  margin: 0 0 28px;
+}
+
+.section-label {
+  color: #7197ac;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.event-card {
+  padding: 24px;
+  margin-bottom: 18px;
+  border: 1px solid #d9edf8;
+  border-radius: 23px;
+  background: white;
+  box-shadow: 0 6px 20px #258cb00a;
+}
+
+.event-card h2 {
+  margin: 0 0 16px;
+  font-size: 21px;
+  overflow-wrap: anywhere;
+}
+
+.event-card p {
+  color: #638396;
+  overflow-wrap: anywhere;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #edf7e4;
+  color: #587d23;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.deadline {
+  font-size: 13px;
+}
+
+.primary-button,
+.secondary-button {
+  width: 100%;
+  padding: 18px;
+  border: 0;
+  border-radius: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.primary-button {
+  margin-bottom: 20px;
+  background: #198bc3;
+  color: white;
+  font-size: 18px;
+}
+
+.secondary-button {
+  background: #e1f0f9;
+  color: #187eaf;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.event-form {
+  display: grid;
+  gap: 20px;
+}
+
+.event-form label {
+  display: block;
+  margin-bottom: 8px;
+  color: #638396;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.event-form input,
+.event-form textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid #d9edf8;
+  border-radius: 15px;
+  background: white;
+  color: #163443;
+}
+
+.event-form textarea {
+  min-height: 135px;
+  resize: vertical;
+}
+
+.event-form .primary-button {
+  margin-bottom: 0;
+}
+
+.error {
+  color: #ad3542;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #8bc53f;
+  outline-offset: 3px;
+}
+
+.detail-card {
+  margin-top: 20px;
+}
+
+.event-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.detail-card dl {
+  display: grid;
+  gap: 10px;
+}
+
+.detail-card dt {
+  margin-top: 12px;
+  color: #638396;
+  font-weight: 700;
+}
+
+.detail-card dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
