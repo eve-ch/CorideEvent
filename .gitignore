@@ -24,3 +24,9 @@ hs_err_pid*
 replay_pid*
 
 /generated/prisma
+
+# AI tools and configuration
+.agents/
+.claude/
+.cursor/
+.devin/
