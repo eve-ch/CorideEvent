@@ -5,31 +5,35 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Coride • Mina event</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f4f7f8;color:#193038;font:16px system-ui,sans-serif}header{background:#fff;border-bottom:1px solid #dce5e8;padding:22px max(24px,calc((100vw - 1000px)/2));display:flex;justify-content:space-between;align-items:center}header strong{font-size:24px;color:#087c70}main{max-width:1000px;margin:42px auto;padding:0 24px}h1{font-size:32px;margin:0 0 8px}h2{margin-top:0}.muted{color:#52676f}.toolbar{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:26px}button{border:0;border-radius:9px;padding:12px 18px;font:inherit;cursor:pointer;background:#087c70;color:white}button.secondary{background:#e9f0f1;color:#193038}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #e6a52e;outline-offset:3px}.panel{background:white;border:1px solid #dce5e8;border-radius:16px;padding:28px;margin-bottom:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}label{display:block;font-weight:600;margin-bottom:8px}input,textarea{width:100%;border:1px solid #aabcc2;border-radius:8px;padding:12px;font:inherit;background:white}textarea{min-height:120px;resize:vertical}.full{grid-column:1/-1}.actions{display:flex;gap:12px;margin-top:26px}.badge{display:inline-block;background:#e3f3ee;color:#16604d;padding:5px 10px;border-radius:30px;font-size:14px}.card-top{display:flex;justify-content:space-between;gap:15px}.card-meta{display:flex;flex-wrap:wrap;gap:14px;margin:16px 0}.notice{font-size:14px;background:#eaf0f4;padding:14px;border-radius:10px;margin-bottom:28px}#message{color:#16604d}#error{color:#a32626}dl{display:grid;grid-template-columns:180px 1fr;gap:16px}dt{font-weight:600}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.description{white-space:pre-wrap;overflow-wrap:anywhere}[hidden]{display:none!important}@media(max-width:600px){.grid{grid-template-columns:1fr}.toolbar,.card-top{align-items:flex-start;flex-direction:column}dl{grid-template-columns:1fr;gap:8px}dd{margin-bottom:12px}header{padding:18px 24px}.panel{padding:20px}}
+:root{--blue:#198bc3;--ink:#163443;--muted:#7197ac;--line:#d9edf8;--bg:#eff8fd}
+*{box-sizing:border-box}body{margin:0;background:#dceaf2;color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,sans-serif}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.6;cursor:wait}.app{max-width:760px;min-height:100vh;margin:auto;background:var(--bg);box-shadow:0 0 40px #173d5010}header{background:white;padding:26px 30px;display:flex;justify-content:space-between;align-items:center}.logo{font-weight:950;letter-spacing:-1.5px;font-size:30px;color:var(--blue)}.logo span{color:#8bc53f}.organizer-label{background:#eaf6fd;border:1px solid var(--line);border-radius:30px;padding:10px 16px;color:var(--blue);font-size:14px;font-weight:700}main{padding:0 24px 45px}h1{font-size:24px;color:#102630;margin:0}h2{font-size:21px;margin:0 0 13px;color:#102630}.toolbar{margin:0 -24px 26px;padding:23px 24px;background:white;border-bottom:1px solid var(--line);text-align:center}.toolbar .muted{display:block;font-size:14px;margin-top:9px}.muted{color:var(--muted)}.notice{border:1px solid var(--line);border-radius:12px;color:#638396;font-size:13px;padding:12px 15px;margin:18px 0}#message{color:#26785b;font-size:14px}#error{color:#ad3542;line-height:1.5}.create-button{display:block;width:100%;margin:0 0 28px;padding:20px;border-radius:15px;background:var(--blue);color:white;font-weight:800;font-size:20px;border:0}.section-label{font-size:14px;font-weight:800;color:var(--muted);letter-spacing:.5px;border-top:1px solid var(--line);padding-top:22px;margin-bottom:18px}.panel{background:white;border:1px solid var(--line);border-radius:23px;padding:25px;margin-bottom:17px;box-shadow:0 6px 20px #258cb00a}form.panel{background:transparent;border:0;padding:0;box-shadow:none}.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.full{grid-column:1/-1}label{display:block;color:var(--muted);font-size:13px;font-weight:750;letter-spacing:.4px;text-transform:uppercase;margin-bottom:8px}input,textarea{width:100%;padding:17px 16px;border:1px solid var(--line);border-radius:15px;background:white;color:var(--ink);min-width:0}input::placeholder,textarea::placeholder{color:#95a8b2}textarea{min-height:135px;resize:vertical}.actions{display:flex;gap:12px;margin-top:24px}button{border:0;background:var(--blue);color:white;border-radius:13px;padding:14px 20px;font-weight:700}.actions button[type=submit]{flex:1;padding:19px}.secondary{background:#e4f2fa;color:var(--blue)}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #a5cc48;outline-offset:3px}.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}.badge{background:#edf7e4;color:#648d2b;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;white-space:nowrap}.card-meta{display:flex;flex-direction:column;gap:8px;color:var(--muted);font-size:15px}.card-meta span{overflow-wrap:anywhere}.event-card{position:relative;padding-right:65px}.open-event{position:absolute;right:16px;top:20px;background:transparent;color:var(--blue);padding:8px;font-size:30px;line-height:1}.deadline-note{font-size:13px;margin:13px 0 0}.description{white-space:pre-wrap;overflow-wrap:anywhere}dl{display:grid;grid-template-columns:160px 1fr;gap:16px}dt{font-weight:700;color:var(--muted)}dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.footer{border-top:1px solid var(--line);background:white;padding:20px;text-align:center;color:var(--blue);font-size:14px;font-weight:700}[hidden]{display:none!important}@media(max-width:550px){header{padding:20px}.logo{font-size:27px}main{padding:0 16px 28px}.toolbar{margin:0 -16px 22px;padding:21px 16px}h1{font-size:22px}h2{font-size:18px}.grid{grid-template-columns:1fr;gap:19px}.panel{padding:22px}.event-card{padding-right:53px}.card-top{flex-direction:column;gap:0}.badge{margin-bottom:12px}.actions{flex-direction:column}dl{grid-template-columns:1fr;gap:7px}dd{margin-bottom:12px}.organizer-label{padding:8px 12px;font-size:12px}}
 </style>
 </head>
 <body>
-<header><strong>coride</strong><span>Arrangör</span></header>
+<div class="app">
+<header><div class="logo" aria-label="Coride">CO<span>R</span>IDE</div><span class="organizer-label">Arrangör</span></header>
 <main>
 <div class="notice">Lokal testversion: event sparas i databasen och tillhör testarrangören.</div>
 <p id="message" role="status" aria-live="polite"></p>
 <section id="list-view">
-<div class="toolbar"><div><h1>Mina event</h1><span class="muted">Skapa event och samla deltagarnas samåkning.</span></div><button id="new-event">+ Skapa event</button></div>
+<div class="toolbar"><div><h1>Admin – Mina event</h1><span class="muted">Skapa event och samla deltagarnas samåkning.</span></div></div>
+<button id="new-event" class="create-button">+ Skapa nytt event</button>
+<div class="section-label">SKAPADE EVENT</div>
 <div id="events"></div>
 </section>
 <section id="form-view" hidden>
 <div class="toolbar"><div><h1>Skapa event</h1><span class="muted">Fyll i informationen om ditt event.</span></div></div>
 <form id="event-form" class="panel">
 <div class="grid">
-<div class="full"><label for="name">Eventnamn *</label><input id="name" name="name" required maxlength="200" placeholder="Till exempel: Höstkonferensen"></div>
-<div class="full"><label for="description">Beskrivning</label><textarea id="description" name="description" maxlength="5000" placeholder="Vad behöver deltagarna veta?"></textarea></div>
+<div class="full"><label for="name">Eventnamn *</label><input id="name" name="name" required maxlength="200" placeholder="T.ex. Sigtuna Folkbildningsgala"></div>
+<div class="full"><label for="description">Beskrivning</label><textarea id="description" name="description" maxlength="5000" placeholder="Beskriv eventet kort"></textarea></div>
 <div class="full"><label for="location">Plats *</label><input id="location" name="eventLocation" required maxlength="300" placeholder="Adress eller platsens namn"></div>
 <div><label for="starts">Startdatum och tid *</label><input id="starts" name="startsAt" type="datetime-local" required></div>
 <div><label for="deadline">Sista anmälningsdag och tid *</label><input id="deadline" name="applicationDeadline" type="datetime-local" required></div>
 </div>
 <p class="muted">* Obligatoriskt fält. Tider anges i datorns lokala tidszon.</p>
 <p id="error" role="alert"></p>
-<div class="actions"><button type="submit">Spara event</button><button type="button" class="secondary" id="cancel">Avbryt</button></div>
+<div class="actions"><button type="submit">Skapa event</button><button type="button" class="secondary" id="cancel">Avbryt</button></div>
 </form>
 </section>
 <section id="detail-view" hidden><button class="secondary" id="back">← Mina event</button><div class="panel" style="margin-top:24px"><h1 id="detail-name"></h1><p id="detail-description" class="description"></p><dl id="detail-fields"></dl></div></section>
@@ -96,16 +100,17 @@ function render() {
         return;
     }
     for (const event of [...events].sort((a,b) => Date.parse(a.startsAt)-Date.parse(b.startsAt))) {
-        const card = node('article', '', 'panel');
+        const card = node('article', '', 'panel event-card');
         const top = node('div', '', 'card-top');
         const status = Date.now() <= Date.parse(event.applicationDeadline) ? 'Anmälan öppen' : 'Anmälan stängd';
         top.append(node('h2', event.name), node('span', status, 'badge'));
         const meta = node('div', '', 'card-meta');
-        meta.append(node('span', 'Plats: '+event.eventLocation), node('span', 'Start: '+date(event.startsAt)));
-        const button = node('button', 'Visa event', 'secondary');
+        meta.append(node('span', 'Datum: '+date(event.startsAt)), node('span', 'Plats: '+event.eventLocation));
+        const button = node('button', '›', 'open-event');
+        button.setAttribute('aria-label', 'Visa event: ' + event.name);
         button.type = 'button';
         button.addEventListener('click', () => details(event));
-        card.append(top, meta, node('p', 'Sista anmälan: '+date(event.applicationDeadline), 'muted'), button);
+        card.append(top, meta, node('p', 'Sista anmälan: '+date(event.applicationDeadline), 'muted deadline-note'), button);
         container.append(card);
     }
 }
@@ -175,11 +180,13 @@ $('event-form').addEventListener('submit', async e => {
     } finally {
         saving = false;
         button.disabled = false;
-        button.textContent = 'Spara event';
+        button.textContent = 'Skapa event';
         $('cancel').disabled = false;
     }
 });
 loadEvents();
 </script>
+<footer class="footer">Coride · Eventsamåkning</footer>
+</div>
 </body>
 </html>
