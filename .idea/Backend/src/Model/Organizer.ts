@@ -6,28 +6,35 @@ export class Organizer{
 
       // Konstruktor
     constructor(id: string, name: string, email: string, passwordHash: string) {
-        this.id = "123";
+        this.id = id;
         this.name = name;
         this.email = email;
         this.passwordHash = passwordHash;
     }
 
     public createEvent(
-        name: String,
-        description:String,
-        eventLocation:String,
-        startsAt:LocalDateTime,
-        applicationDeadline:LocalDateTime
+        name: string,
+        description: string,
+        eventLocation:string,
+        startsAt: Date,
+        applicationDeadline: Date
     ): Event{
-        const eventId = "Event 1";
-        const newEvent :Event = new Event(eventId, name, description, eventLocation, startsAt, applicationDeadline, this.id);
+        const eventId = crypto.randomUUID();
+        const shareToken = crypto.randomUUID();
+        const newEvent :Event = new Event(eventId,
+            name,
+            description,
+            eventLocation,
+            startsAt,
+            applicationDeadline,
+            shareToken);
 
         return newEvent;
 
     }
 
     public updateEvent(event:Event): void{
-        console.log(`Uppdaterar event: ${event.name}`); //Skriver ut
+        console.log(`Uppdaterar event: ${event.getName()}`); //Skriver ut
     }
 
 
