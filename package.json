@@ -1,0 +1,29 @@
+{
+  "name": "corideevent",
+  "version": "1.0.0",
+  "description": "In Sweden, we are poor at ridesharing; often, there is only one person in the car—the driver. Can ridesharing lead to saved resources for both the environment and the wallet? The threshold for starting to rideshare and changing current habits can be high, so the question is: how can we encourage more people to rideshare?",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "prisma skills sync || exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eve-ch/CorideEvent.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/eve-ch/CorideEvent/issues"
+  },
+  "homepage": "https://github.com/eve-ch/CorideEvent#readme",
+  "devDependencies": {
+    "@prisma/client": "^6.19.3",
+    "@types/node": "^26.6.4",
+    "prisma": "^6.19.3",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3"
+  }
+}
