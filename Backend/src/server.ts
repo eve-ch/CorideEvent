@@ -11,11 +11,11 @@ app.use(express.json());
 app.use('/api/events', eventRoutes);
 
 // Visar filerna i Frontend.
-const frontendPath = path.resolve(process.cwd(), 'Frontend');
+const frontendPath = path.resolve(process.cwd(), 'Frontend/react/dist');
 app.use(express.static(frontendPath));
 
 app.get('/', (_req, res) => {
-    res.sendFile(path.join(frontendPath, 'events.html'));
+    res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 app.listen(port, '127.0.0.1', () => {
