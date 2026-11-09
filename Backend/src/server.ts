@@ -26,6 +26,10 @@ app.get('/event/:shareToken', (_req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
+app.get('/access/:token', (_req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 app.listen(port, '127.0.0.1', () => {
     console.log(`React och backend körs på http://localhost:${port}`);
 });

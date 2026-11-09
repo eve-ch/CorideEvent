@@ -31,6 +31,8 @@ export default function PublicEventPage({
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [formMessage, setFormMessage] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [accessPath, setAccessPath] = useState('');
 
     useEffect(() => {
         const controller = new AbortController();
@@ -79,19 +81,65 @@ export default function PublicEventPage({
         return () => controller.abort();
     }, [shareToken]);
 
-    function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
-        if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+        if (saving) return;
+
+        setFormMessage('');
+        setAccessPath('');
+
+        const details = {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim(),
+        };
+
+        if (!details.firstName || !details.lastName || !details.email) {
             setFormMessage('Fyll i förnamn, efternamn och mejladress.');
             return;
         }
 
-        // Nästa steg: skicka uppgifterna till backend
-        // och skapa den personliga åtkomstlänken.
-        setFormMessage(
-            'Formuläret är ännu inte kopplat till sparande eller mejlutskick. Inga uppgifter har skickats.'
-        );
+        setSaving(true);
+
+        try {
+            const response = await fetch(
+                `/api/events/public/${encodeURIComponent(shareToken)}/access-links`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(details),
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message || 'Kunde inte skapa personlig länk.'
+                );
+            }
+
+            if (
+                typeof data.accessPath !== 'string' ||
+                !/^\/access\/[a-f0-9]{64}$/.test(data.accessPath)
+            ) {
+                throw new Error('Servern returnerade en ogiltig länk.');
+            }
+
+            setAccessPath(data.accessPath);
+            setFormMessage('Din personliga testlänk har skapats.');
+        } catch (error) {
+            setFormMessage(
+                error instanceof Error
+                    ? error.message
+                    : 'Ingen kontakt med servern. Försök igen senare.'
+            );
+        } finally {
+            setSaving(false);
+        }
     }
 
     return (
@@ -144,8 +192,8 @@ export default function PublicEventPage({
                             </p>
 
                             <p className="notice">
-                                Testversion: sparande och mejlutskick
-                                är ännu inte inkopplade.
+                                Lokal testversion: den personliga länken visas här.
+                                Inget mejl skickas ännu.
                             </p>
 
                             <form
@@ -204,15 +252,22 @@ export default function PublicEventPage({
                                     />
                                 </div>
 
-                                {formMessage && (
-                                    <p role="status">{formMessage}</p>
+                                {formMessage && <p role="status">{formMessage}</p>}
+
+                                {accessPath && (
+                                    <p>
+                                        <a href={accessPath}>
+                                            Öppna min personliga eventsida →
+                                        </a>
+                                    </p>
                                 )}
 
                                 <button
                                     className="primary-button"
                                     type="submit"
+                                    disabled={saving}
                                 >
-                                    Begär personlig länk
+                                    {saving ? 'Skapar länk...' : 'Begär personlig länk'}
                                 </button>
                             </form>
                         </section>
