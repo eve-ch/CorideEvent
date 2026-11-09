@@ -85,10 +85,18 @@ main {
   display: inline-block;
   padding: 6px 12px;
   border-radius: 20px;
-  background: #edf7e4;
-  color: #587d23;
   font-size: 13px;
   font-weight: 700;
+}
+
+.badge-open {
+  background: #edf7e4;
+  color: #587d23;
+}
+
+.badge-closed {
+  background: #fdeaea;
+  color: #b42318;
 }
 
 .deadline {
@@ -222,4 +230,51 @@ textarea:focus-visible {
   grid-column: 1 / -1;
   margin: 0;
   font-size: 13px;
+}
+
+.role-selector {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.role-card {
+  flex: 1;
+  border: 2px solid #d7e5f3;
+  border-radius: 16px;
+  background: white;
+  padding: 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.role-card:hover {
+  border-color: #2387c6;
+}
+
+.role-card.selected {
+  background: #2387c6;
+  color: white;
+  border-color: #2387c6;
+}
+
+.travel-card {
+  margin-top: 16px;
+}
+
+.travel-card select {
+  width: 100%;
+  border: 2px solid #d7e5f3;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 16px;
+  background: white;
+}
+
+#offeredSeats {
+  width: 100%;
+  border: 2px solid #d7e5f3;
+  border-radius: 12px;
+  padding: 12px;
 }

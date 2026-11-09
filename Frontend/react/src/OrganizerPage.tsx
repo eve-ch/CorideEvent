@@ -219,11 +219,17 @@ function OrganizerPage() {
                       <p>Datum: {formatDate(event.starts_at)}</p>
                       <p>Plats: {event.event_location}</p>
 
-                      <span className="badge">
-            {now <= Date.parse(event.application_deadline)
-                ? 'Anmälan öppen'
-                : 'Anmälan stängd'}
-        </span>
+                        <span
+                            className={
+                                now <= Date.parse(event.application_deadline)
+                                    ? 'badge badge-open'
+                                    : 'badge badge-closed'
+                            }
+                        >
+                         {now <= Date.parse(event.application_deadline)
+                          ? 'Anmälan öppen'
+                          : 'Anmälan stängd'}
+                        </span>
 
                       <p className="deadline">
                         Sista anmälan:{' '}
