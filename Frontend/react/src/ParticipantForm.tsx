@@ -1,12 +1,23 @@
 import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
+export type TravelOptionData = {
+    id: string;
+    place_name: string;
+    departure_time: string;
+    direction: string;
+};
+
 type ParticipantFormProps = {
+    token: string;
+    travelOptions: TravelOptionData[];
     onCreated: () => void;
     onCancel: () => void;
 };
 
 function ParticipantForm({
+                             token,
+                             travelOptions,
                              onCreated,
                              onCancel,
                          }: ParticipantFormProps) {
@@ -27,17 +38,7 @@ function ParticipantForm({
 
         const form = new FormData(e.currentTarget);
 
-        const firstName = String(
-            form.get('firstName') ?? ''
-        ).trim();
 
-        const lastName = String(
-            form.get('lastName') ?? ''
-        ).trim();
-
-        const email = String(
-            form.get('email') ?? ''
-        ).trim();
 
         const travelOption = String(
             form.get('travelOption') ?? ''
@@ -48,13 +49,6 @@ function ParticipantForm({
                 ? Number(form.get('offeredSeats'))
                 : null;
 
-        if (!firstName || !lastName || !email) {
-            setError(
-                'Ange förnamn, efternamn och e-post.'
-            );
-            return;
-        }
-
         if (!travelOption) {
             setError('Välj en startplats.');
             return;
@@ -63,14 +57,13 @@ function ParticipantForm({
         if (
             role === 'DRIVER' &&
             (
-                !offeredSeats ||
+                offeredSeats === null ||
+                !Number.isInteger(offeredSeats) ||
                 offeredSeats < 1 ||
                 offeredSeats > 15
             )
         ) {
-            setError(
-                'Antal platser måste vara mellan 1 och 15.'
-            );
+            setError('Antal platser måste vara mellan 1 och 15.');
             return;
         }
 
@@ -79,7 +72,7 @@ function ParticipantForm({
 
         try {
             const response = await fetch(
-                '/api/participants',
+                `/api/events/access/${encodeURIComponent(token)}/registrations`,
                 {
                     method: 'POST',
                     headers: {
@@ -87,11 +80,8 @@ function ParticipantForm({
                             'application/json',
                     },
                     body: JSON.stringify({
-                        firstName,
-                        lastName,
-                        email,
+                        travelOptionId: travelOption,
                         role,
-                        travelOption,
                         offeredSeats,
                     }),
                 }
@@ -125,47 +115,6 @@ function ParticipantForm({
             className="event-form"
             onSubmit={handleSubmit}
         >
-            <h2>Deltagarinformation</h2>
-
-            <div>
-                <label htmlFor="firstName">
-                    Förnamn *
-                </label>
-
-                <input
-                    id="firstName"
-                    name="firstName"
-                    required
-                    maxLength={100}
-                />
-            </div>
-
-            <div>
-                <label htmlFor="lastName">
-                    Efternamn *
-                </label>
-
-                <input
-                    id="lastName"
-                    name="lastName"
-                    required
-                    maxLength={100}
-                />
-            </div>
-
-            <div>
-                <label htmlFor="email">
-                    E-post *
-                </label>
-
-                <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    maxLength={255}
-                />
-            </div>
 
             <h2>Reseinformation</h2>
 
@@ -219,17 +168,17 @@ function ParticipantForm({
                         Välj startplats
                     </option>
 
-                    <option value="lund">
-                        Lund C
-                    </option>
-
-                    <option value="malmo">
-                        Malmö C
-                    </option>
-
-                    <option value="helsingborg">
-                        Helsingborg C
-                    </option>
+                    {travelOptions
+                        .filter(option => option.direction === 'TO_EVENT')
+                        .map(option => (
+                            <option key={option.id} value={option.id}>
+                                {option.place_name} –{' '}
+                                {new Intl.DateTimeFormat('sv-SE', {
+                                    dateStyle: 'short',
+                                    timeStyle: 'short',
+                                }).format(new Date(option.departure_time))}
+                            </option>
+                        ))}
                 </select>
             </div>
 

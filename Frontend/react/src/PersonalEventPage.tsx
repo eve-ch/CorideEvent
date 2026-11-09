@@ -1,4 +1,18 @@
 import { useEffect, useState } from 'react';
+import ParticipantForm from './ParticipantForm';
+import type { TravelOptionData } from './ParticipantForm';
+
+type RegistrationData = {
+    id: string;
+    role: string;
+    offered_seats: number | null;
+    status: string;
+    travel_option: {
+        place_name: string;
+        departure_time: string;
+        direction: string;
+    };
+};
 
 type PersonalEventData = {
     firstName: string;
@@ -8,7 +22,9 @@ type PersonalEventData = {
         event_location: string;
         starts_at: string;
         application_deadline: string;
+        travel_options: TravelOptionData[];
     };
+    registrations: RegistrationData[];
 };
 
 function formatDate(value: string) {
@@ -18,14 +34,12 @@ function formatDate(value: string) {
     }).format(new Date(value));
 }
 
-export default function PersonalEventPage({
-                                              token,
-                                          }: {
-    token: string;
-}) {
+export default function PersonalEventPage({ token }: { token: string }) {
     const [data, setData] = useState<PersonalEventData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [registrationMessage, setRegistrationMessage] = useState('');
+    const [reload, setReload] = useState(0);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -81,7 +95,11 @@ export default function PersonalEventPage({
         loadPage();
 
         return () => controller.abort();
-    }, [token]);
+    }, [token, reload]);
+
+    const outboundRegistrations = data?.registrations.filter(
+        registration => registration.travel_option.direction === 'TO_EVENT'
+    ) ?? [];
 
     return (
         <div className="app">
@@ -97,37 +115,110 @@ export default function PersonalEventPage({
             </div>
 
             <main>
+                {registrationMessage && (
+                    <p role="status">{registrationMessage}</p>
+                )}
+
                 {loading && <p role="status">Hämtar din eventsida...</p>}
 
                 {error && (
-                    <p className="error" role="alert">{error}</p>
+                    <div>
+                        <p className="error" role="alert">{error}</p>
+                        <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={() => setReload(value => value + 1)}
+                        >
+                            Försök hämta sidan igen
+                        </button>
+                    </div>
                 )}
 
                 {!loading && !error && data && (
-                    <article className="event-card">
-                        <h2>Hej {data.firstName}!</h2>
+                    <>
+                        <article className="event-card">
+                            <h2>Hej {data.firstName}!</h2>
+                            <h3>{data.event.name}</h3>
 
-                        <h3>{data.event.name}</h3>
+                            <p className="event-description">
+                                {data.event.description ||
+                                    'Ingen beskrivning angiven.'}
+                            </p>
 
-                        <p className="event-description">
-                            {data.event.description ||
-                                'Ingen beskrivning angiven.'}
-                        </p>
+                            <p>Plats: {data.event.event_location}</p>
+                            <p>
+                                Start: {formatDate(data.event.starts_at)}
+                            </p>
+                            <p>
+                                Sista anmälan:{' '}
+                                {formatDate(data.event.application_deadline)}
+                            </p>
+                        </article>
 
-                        <p>Plats: {data.event.event_location}</p>
-                        <p>
-                            Start: {formatDate(data.event.starts_at)}
-                        </p>
-                        <p>
-                            Sista anmälan:{' '}
-                            {formatDate(data.event.application_deadline)}
-                        </p>
+                        {outboundRegistrations.length > 0 ? (
+                            <article className="event-card detail-card">
+                                <h2>Din samåkningsanmälan</h2>
 
-                        <p className="notice">
-                            Din personliga länk fungerar. Val av
-                            samåkningsalternativ kopplas in senare.
-                        </p>
-                    </article>
+                                {outboundRegistrations.map(registration => (
+                                    <dl key={registration.id}>
+                                        <dt>Roll</dt>
+                                        <dd>
+                                            {registration.role === 'DRIVER'
+                                                ? 'Förare'
+                                                : 'Passagerare'}
+                                        </dd>
+
+                                        <dt>Avreseplats</dt>
+                                        <dd>
+                                            {registration.travel_option.place_name}
+                                        </dd>
+
+                                        <dt>Avresetid</dt>
+                                        <dd>
+                                            {formatDate(
+                                                registration.travel_option
+                                                    .departure_time
+                                            )}
+                                        </dd>
+
+                                        {registration.role === 'DRIVER' && (
+                                            <>
+                                                <dt>Erbjudna platser</dt>
+                                                <dd>
+                                                    {registration.offered_seats}
+                                                </dd>
+                                            </>
+                                        )}
+
+                                        <dt>Status</dt>
+                                        <dd>
+                                            {registration.status === 'REGISTERED'
+                                                ? 'Registrerad'
+                                                : registration.status}
+                                        </dd>
+                                    </dl>
+                                ))}
+                            </article>
+                        ) : (
+                            <article className="event-card">
+                                <h2>Anmäl dig till samåkning</h2>
+
+                                <ParticipantForm
+                                    token={token}
+                                    travelOptions={data.event.travel_options}
+                                    onCreated={() => {
+                                        setRegistrationMessage(
+                                            'Din samåkningsanmälan har sparats.'
+                                        );
+                                        setReload(value => value + 1);
+                                    }}
+                                    onCancel={() => {
+                                        setRegistrationMessage('');
+                                    }}
+                                />
+                            </article>
+                        )}
+                    </>
                 )}
             </main>
         </div>

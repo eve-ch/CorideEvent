@@ -1,5 +1,3 @@
-import ParticipantForm from './ParticipantForm';
-
 function ParticipantPage() {
     return (
         <div className="app">
@@ -36,12 +34,7 @@ function ParticipantPage() {
                 </article>
 
                 <article className="event-card">
-                    <ParticipantForm
-                        onCreated={() =>
-                            alert('Anmälan sparad!')
-                        }
-                        onCancel={() => {}}
-                    />
+                    <p>Öppna din personliga eventlänk för att anmäla samåkning.</p>
                 </article>
             </main>
         </div>
