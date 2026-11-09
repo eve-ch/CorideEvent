@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import './App.css';
+import './OrganizerPage.css';
 import EventForm from './EventForm';
 
 type EventData = {
@@ -20,7 +20,7 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
-function App() {
+function OrganizerPage() {
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -249,5 +249,5 @@ function App() {
   );
 }
 
-export default App;
+export default OrganizerPage;
 

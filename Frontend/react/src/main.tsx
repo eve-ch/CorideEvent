@@ -1,8 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import './App.css';
-import App from './App';
+import './OrganizerPage.css';
+import OrganizerPage from './OrganizerPage.tsx';
 import PublicEventPage from './PublicEventPage';
 import PersonalEventPage from './PersonalEventPage';
 
@@ -16,7 +16,7 @@ const page = accessPath ? (
 ) : eventPath ? (
     <PublicEventPage shareToken={eventPath[1]} />
 ) : pathname === '/' ? (
-    <App />
+    <OrganizerPage />
 ) : (
     <main>
         <h1>Sidan hittades inte</h1>
