@@ -117,3 +117,34 @@ eventRoutes.post('/', async (req, res) => {
         });
     }
 });
+eventRoutes.get('/public/:shareToken', async (req, res) => {
+    try {
+        const event = await prisma.event.findUnique({
+            where: {
+                share_token: req.params.shareToken,
+            },
+            select: {
+                name: true,
+                description: true,
+                event_location: true,
+                starts_at: true,
+                application_deadline: true,
+            },
+        });
+
+        if (!event) {
+            res.status(404).json({
+                message: 'Eventet hittades inte. Kontrollera länken.',
+            });
+            return;
+        }
+
+        res.json(event);
+    } catch (error) {
+        console.error('Kunde inte hämta publikt event:', error);
+
+        res.status(500).json({
+            message: 'Kunde inte hämta eventet.',
+        });
+    }
+});
