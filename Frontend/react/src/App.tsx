@@ -10,6 +10,7 @@ type EventData = {
   starts_at: string;
   application_deadline: string;
   matching_status: string;
+  share_token: string;
 };
 
 function formatDate(value: string) {
@@ -28,6 +29,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [copyMessage, setCopyMessage] = useState('');
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -73,6 +75,24 @@ function App() {
 
     return () => controller.abort();
   }, [reload]);
+
+  async function copyEventLink() {
+    if (!selectedEvent) return;
+
+    const link =
+        `${window.location.origin}/event/${selectedEvent.share_token}`;
+
+    setCopyMessage('');
+
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopyMessage('Eventlänken har kopierats.');
+    } catch {
+      setCopyMessage(
+          'Kunde inte kopiera automatiskt. Markera länken och kopiera den.'
+      );
+    }
+  }
 
   return (
       <div className="app">
@@ -129,6 +149,19 @@ function App() {
                       {selectedEvent.matching_status === 'NOT_STARTED'
                           ? 'Inte påbörjad'
                           : selectedEvent.matching_status}
+                    </dd>
+
+                    <dt>Länk till eventet</dt>
+                    <dd className="event-share">
+                      <input aria-label="Länk till eventet" type="text" readOnly
+                          value={
+                            `${window.location.origin}/event/${selectedEvent.share_token}`
+                          }
+                          onFocus={e => e.currentTarget.select()}
+                      />
+
+                      <button type="button" className="secondary-button" onClick={copyEventLink}>Kopiera</button>
+                      {copyMessage && <p role="status">{copyMessage}</p>}
                     </dd>
                   </dl>
                 </article>
@@ -201,6 +234,7 @@ function App() {
                           className="secondary-button"
                           onClick={() => {
                             setMessage('');
+                            setCopyMessage('');
                             setSelectedEvent(event);
                           }}
                       >
@@ -216,3 +250,4 @@ function App() {
 }
 
 export default App;
+

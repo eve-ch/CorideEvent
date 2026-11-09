@@ -191,3 +191,35 @@ textarea:focus-visible {
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+.detail-card dd.event-share {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  white-space: normal;
+}
+
+.event-share input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #d9edf8;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+}
+
+.event-share .secondary-button {
+  width: auto;
+  padding: 10px 14px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.event-share p[role="status"] {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+}
