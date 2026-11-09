@@ -4,14 +4,14 @@
   "description": "In Sweden, we are poor at ridesharing; often, there is only one person in the car—the driver. Can ridesharing lead to saved resources for both the environment and the wallet? The threshold for starting to rideshare and changing current habits can be high, so the question is: how can we encourage more people to rideshare?",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "prisma skills sync || exit 0"
+    "start": "tsx Backend/src/server.ts",
+    "dev": "tsx watch Backend/src/server.ts",
+    "build": "npm --prefix Frontend/react run build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/eve-ch/CorideEvent.git"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
