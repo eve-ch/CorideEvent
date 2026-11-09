@@ -83,8 +83,7 @@ export default function PublicEventPage({
 
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
-
-        if (saving) return;
+        if (saving || accessPath) return;
 
         setFormMessage('');
         setAccessPath('');
@@ -193,7 +192,9 @@ export default function PublicEventPage({
 
                             <p className="notice">
                                 Lokal testversion: den personliga länken visas här.
-                                Inget mejl skickas ännu.
+                                Inget mejl skickas.
+                                Kopiera och spara din personliga länk.
+                                Alla som har länken kan öppna din eventsida.
                             </p>
 
                             <form
@@ -262,13 +263,15 @@ export default function PublicEventPage({
                                     </p>
                                 )}
 
-                                <button
-                                    className="primary-button"
-                                    type="submit"
-                                    disabled={saving}
-                                >
-                                    {saving ? 'Skapar länk...' : 'Begär personlig länk'}
-                                </button>
+                                {!accessPath && (
+                                    <button
+                                        className="primary-button"
+                                        type="submit"
+                                        disabled={saving}
+                                    >
+                                        {saving ? 'Skapar länk...' : 'Begär personlig länk'}
+                                    </button>
+                                )}
                             </form>
                         </section>
                     </>
