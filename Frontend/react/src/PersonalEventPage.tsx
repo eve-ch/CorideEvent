@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import ParticipantForm from './ParticipantForm';
 import type { TravelOptionData } from './ParticipantForm';
+import ParticipantPage from './ParticipantPage';
 
 type RegistrationData = {
     id: string;
@@ -102,19 +103,10 @@ export default function PersonalEventPage({ token }: { token: string }) {
     ) ?? [];
 
     return (
-        <div className="app">
-            <header>
-                <div className="logo">
-                    CO<span>R</span>IDE
-                </div>
-                <span className="organizer-label">Eventdeltagare</span>
-            </header>
-
-            <div className="page-title">
-                <h1>Min eventsida</h1>
-            </div>
-
-            <main>
+            <ParticipantPage
+                firstName={!loading && !error && data ? data.firstName : undefined}
+                event={!loading && !error && data ? data.event : undefined}
+            >
                 {registrationMessage && (
                     <p role="status">{registrationMessage}</p>
                 )}
@@ -136,24 +128,6 @@ export default function PersonalEventPage({ token }: { token: string }) {
 
                 {!loading && !error && data && (
                     <>
-                        <article className="event-card">
-                            <h2>Hej {data.firstName}!</h2>
-                            <h3>{data.event.name}</h3>
-
-                            <p className="event-description">
-                                {data.event.description ||
-                                    'Ingen beskrivning angiven.'}
-                            </p>
-
-                            <p>Plats: {data.event.event_location}</p>
-                            <p>
-                                Start: {formatDate(data.event.starts_at)}
-                            </p>
-                            <p>
-                                Sista anmälan:{' '}
-                                {formatDate(data.event.application_deadline)}
-                            </p>
-                        </article>
 
                         {outboundRegistrations.length > 0 ? (
                             <article className="event-card detail-card">
@@ -220,7 +194,6 @@ export default function PersonalEventPage({ token }: { token: string }) {
                         )}
                     </>
                 )}
-            </main>
-        </div>
+            </ParticipantPage>
     );
 }

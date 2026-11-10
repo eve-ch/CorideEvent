@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import './OrganizerPage.css';
 import OrganizerPage from './OrganizerPage.tsx';
-import PublicEventPage from './PublicEventPage';
+import RegisterPage from './RegisterPage';
 import PersonalEventPage from './PersonalEventPage';
 
 const pathname = window.location.pathname;
@@ -14,7 +14,7 @@ const accessPath = pathname.match(/^\/access\/([^/]+)\/?$/);
 const page = accessPath ? (
     <PersonalEventPage token={accessPath[1]} />
 ) : eventPath ? (
-    <PublicEventPage shareToken={eventPath[1]} />
+    <RegisterPage key={eventPath[1]} shareToken={eventPath[1]} />
 ) : pathname === '/' ? (
     <OrganizerPage />
 ) : (
