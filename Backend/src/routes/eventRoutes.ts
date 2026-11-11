@@ -106,6 +106,15 @@ eventRoutes.post('/', async (req, res) => {
                 application_deadline: deadline,
                 share_token: randomUUID(),
                 matching_status: 'NOT_STARTED',
+                travel_options: {
+                    create: {
+                        place_name: 'Standardstartplats – testalternativ',
+                        departure_time: new Date(
+                            startsAt.getTime() - 60 * 60 * 1000
+                        ),
+                        direction: 'TO_EVENT',
+                    },
+                },
             },
         });
 
@@ -114,6 +123,37 @@ eventRoutes.post('/', async (req, res) => {
         console.error('Kunde inte spara event:', error);
         res.status(500).json({
             message: 'Kunde inte spara event.',
+        });
+    }
+});
+eventRoutes.get('/public/:shareToken', async (req, res) => {
+    try {
+        const event = await prisma.event.findUnique({
+            where: {
+                share_token: req.params.shareToken,
+            },
+            select: {
+                name: true,
+                description: true,
+                event_location: true,
+                starts_at: true,
+                application_deadline: true,
+            },
+        });
+
+        if (!event) {
+            res.status(404).json({
+                message: 'Eventet hittades inte. Kontrollera länken.',
+            });
+            return;
+        }
+
+        res.json(event);
+    } catch (error) {
+        console.error('Kunde inte hämta publikt event:', error);
+
+        res.status(500).json({
+            message: 'Kunde inte hämta eventet.',
         });
     }
 });

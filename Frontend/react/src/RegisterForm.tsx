@@ -3,11 +3,13 @@ import type { FormEvent } from 'react';
 
 type ParticipantStartFormProps = {
     eventName: string;
-    onCreated: () => void;
+    shareToken: string;
+    onCreated: (accessPath: string) => void;
 };
 
 function ParticipantStartForm({
                                   eventName,
+                                  shareToken,
                                   onCreated,
                               }: ParticipantStartFormProps) {
     const [saving, setSaving] = useState(false);
@@ -54,7 +56,7 @@ function ParticipantStartForm({
 
         try {
             const response = await fetch(
-                '/api/participants/start',
+                `/api/events/public/${encodeURIComponent(shareToken)}/access-links`,
                 {
                     method: 'POST',
                     headers: {
@@ -69,9 +71,8 @@ function ParticipantStartForm({
                 }
             );
 
+            const data = await response.json();
             if (!response.ok) {
-                const data =
-                    await response.json();
 
                 setError(
                     data.message ??
@@ -80,8 +81,15 @@ function ParticipantStartForm({
 
                 return;
             }
+            if (
+                typeof data.accessPath !== 'string' ||
+                !/^\/access\/[a-f0-9]{64}$/.test(data.accessPath)
+            ) {
+                setError('Servern returnerade en ogiltig länk.');
+                return;
+            }
 
-            onCreated();
+            onCreated(data.accessPath);
         } catch {
             setError(
                 'Kunde inte skicka uppgifterna.'
@@ -113,7 +121,7 @@ function ParticipantStartForm({
                     id="firstName"
                     name="firstName"
                     required
-                    maxLength={100}
+                    maxLength={254}
                 />
             </div>
 

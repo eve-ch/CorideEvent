@@ -1,6 +1,26 @@
-import ParticipantForm from './ParticipantForm';
+//import ParticipantForm from './ParticipantForm';
+import type { ReactNode } from 'react';
 
-function ParticipantPage() {
+type ParticipantPageProps = {
+    firstName?: string;
+    event?: {
+        name: string;
+        description: string | null;
+        event_location: string;
+        starts_at: string;
+        application_deadline: string;
+    };
+    children: ReactNode;
+};
+
+function formatDate(value: string) {
+    return new Intl.DateTimeFormat('sv-SE', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(value));
+}
+
+function ParticipantPage({firstName, event, children,}: ParticipantPageProps) {
     return (
         <div className="app">
             <header>
@@ -15,34 +35,31 @@ function ParticipantPage() {
 
             <main>
                 <h1>Anmäl till event</h1>
+                {firstName && <h2>Hej {firstName}!</h2>}
+
+                {event && (
 
                 <article className="event-card detail-card">
-                    <h2>Sigtuna Folkbildningsgala</h2>
+                    <h2>{event.name}</h2>
 
-                    <p>
-                        Välkommen till årets gala.
+                    <p className="event-description">
+                        {event.description || 'Ingen beskrivning angiven.'}
                     </p>
 
                     <dl>
                         <dt>Plats</dt>
-                        <dd>Sigtuna folkhögskola</dd>
+                        <dd>{event.event_location}</dd>
 
                         <dt>Datum</dt>
-                        <dd>15 oktober 2026 kl 18:00</dd>
+                        <dd>{formatDate(event.starts_at)}</dd>
 
                         <dt>Sista anmälan</dt>
-                        <dd>10 oktober 2026</dd>
+                        <dd>{formatDate(event.application_deadline)}</dd>
                     </dl>
                 </article>
+                )}
 
-                <article className="event-card">
-                    <ParticipantForm
-                        onCreated={() =>
-                            alert('Anmälan sparad!')
-                        }
-                        onCancel={() => {}}
-                    />
-                </article>
+                {children}
             </main>
         </div>
     );
