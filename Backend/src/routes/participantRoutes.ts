@@ -87,6 +87,7 @@ participantRoutes.get('/access/:token', async (req, res) => {
                 status: true,
                 travel_option: {
                     select: {
+                        id: true,
                         place_name: true,
                         departure_time: true,
                         direction: true,
@@ -288,3 +289,280 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
         });
     }
 });
+
+participantRoutes.delete(
+    '/access/:token/registrations/:registrationId',
+    async (req, res) => {
+        const token = req.params.token;
+
+        if (!/^[a-f0-9]{64}$/.test(token)) {
+            res.status(404).json({
+                message: 'Den personliga länken är ogiltig.',
+            });
+            return;
+        }
+        try {
+            const tokenHash = createHash('sha256')
+                .update(token)
+                .digest('hex');
+
+            const link = await prisma.personalAccessLink.findUnique({
+                where: {
+                    token_hash: tokenHash,
+                },
+                select: {
+                    event_id: true,
+                    participant_id: true,
+                    expires_at: true,
+                    revoked_at: true,
+                    event: {
+                        select: {
+                            application_deadline: true,
+                        },
+                    },
+                },
+            });
+
+            if (!link) {
+                res.status(404).json({
+                    message: 'Den personliga länken är ogiltig.',
+                });
+                return;
+            }
+
+            const now = new Date();
+
+            if (
+                link.revoked_at !== null ||
+                link.expires_at <= now
+            ) {
+                res.status(410).json({
+                    message: 'Den personliga länken gäller inte längre.',
+                });
+                return;
+            }
+
+            if (
+                now > link.event.application_deadline
+            ) {
+                res.status(400).json({
+                    message: 'Anmälningstiden har gått ut.',
+                });
+                return;
+            }
+
+            const registration =
+                await prisma.rideRegistration.findFirst({
+                    where: {
+                        id: req.params.registrationId,
+                        participant_id: link.participant_id,
+                        event_id: link.event_id,
+                    },
+                });
+
+            if (!registration) {
+                res.status(404).json({
+                    message: 'Anmälan hittades inte.',
+                });
+                return;
+            }
+
+            await prisma.rideRegistration.delete({
+                where: {
+                    id: registration.id,
+                },
+            });
+
+            res.json({
+                message: 'Anmälan har tagits bort.',
+            });
+        } catch (error) {
+            console.error(
+                'Kunde inte ta bort anmälan:',
+                error
+            );
+
+            res.status(500).json({
+                message: 'Kunde inte ta bort anmälan.',
+            });
+        }
+    }
+);
+
+participantRoutes.put(
+    '/access/:token/registrations/:registrationId',
+    async (req, res) => {
+        const token = req.params.token;
+        const registrationId = req.params.registrationId;
+        const body = req.body;
+
+        if (!/^[a-f0-9]{64}$/.test(token)) {
+            res.status(404).json({
+                message: 'Den personliga länken är ogiltig.',
+            });
+            return;
+        }
+
+        if (
+            !body ||
+            typeof body.travelOptionId !== 'string' ||
+            typeof body.role !== 'string'
+        ) {
+            res.status(400).json({
+                message: 'Anmälans uppgifter är ogiltiga.',
+            });
+            return;
+        }
+
+        const travelOptionId = body.travelOptionId.trim();
+        const role = body.role;
+
+        if (!travelOptionId) {
+            res.status(400).json({
+                message: 'Välj ett resealternativ.',
+            });
+            return;
+        }
+
+        if (
+            role !== 'DRIVER' &&
+            role !== 'PASSENGER'
+        ) {
+            res.status(400).json({
+                message: 'Ogiltig roll.',
+            });
+            return;
+        }
+
+        if (
+            role === 'DRIVER' &&
+            (
+                typeof body.offeredSeats !== 'number' ||
+                !Number.isInteger(body.offeredSeats) ||
+                body.offeredSeats < 1 ||
+                body.offeredSeats > 15
+            )
+        ) {
+            res.status(400).json({
+                message:
+                    'Antal platser måste vara ett heltal mellan 1 och 15.',
+            });
+            return;
+        }
+
+        const offeredSeats =
+            role === 'DRIVER'
+                ? body.offeredSeats
+                : null;
+
+        try {
+            const tokenHash = createHash('sha256')
+                .update(token)
+                .digest('hex');
+
+            const link =
+                await prisma.personalAccessLink.findUnique({
+                    where: {
+                        token_hash: tokenHash,
+                    },
+                    select: {
+                        event_id: true,
+                        participant_id: true,
+                        expires_at: true,
+                        revoked_at: true,
+                        event: {
+                            select: {
+                                application_deadline: true,
+                            },
+                        },
+                    },
+                });
+
+            if (!link) {
+                res.status(404).json({
+                    message: 'Den personliga länken är ogiltig.',
+                });
+                return;
+            }
+
+            const now = new Date();
+
+            if (
+                link.revoked_at !== null ||
+                link.expires_at <= now
+            ) {
+                res.status(410).json({
+                    message:
+                        'Den personliga länken gäller inte längre.',
+                });
+                return;
+            }
+
+            if (now > link.event.application_deadline) {
+                res.status(400).json({
+                    message: 'Anmälningstiden har gått ut.',
+                });
+                return;
+            }
+
+            const travelOption =
+                await prisma.travelOption.findFirst({
+                    where: {
+                        id: travelOptionId,
+                        event_id: link.event_id,
+                        direction: 'TO_EVENT',
+                    },
+                });
+
+            if (!travelOption) {
+                res.status(400).json({
+                    message:
+                        'Välj ett giltigt ditresealternativ för eventet.',
+                });
+                return;
+            }
+
+            const registration =
+                await prisma.rideRegistration.findFirst({
+                    where: {
+                        id: registrationId,
+                        participant_id: link.participant_id,
+                        event_id: link.event_id,
+                    },
+                });
+
+            if (!registration) {
+                res.status(404).json({
+                    message: 'Anmälan hittades inte.',
+                });
+                return;
+            }
+
+            await prisma.rideRegistration.update({
+                where: {
+                    id: registrationId,
+                },
+                data: {
+                    role,
+                    offered_seats: offeredSeats,
+                    travel_option_id: travelOptionId,
+                },
+            });
+
+            res.json({
+                message: 'Anmälan har uppdaterats.',
+            });
+
+        } catch (error) {
+            console.error(
+                'Kunde inte uppdatera anmälan:',
+                error
+            );
+
+            res.status(500).json({
+                message:
+                    'Kunde inte uppdatera anmälan.',
+            });
+        }
+    }
+);

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import ParticipantForm from './ParticipantForm';
-import type { TravelOptionData } from './ParticipantForm';
+import type {TravelOptionData} from './ParticipantForm';
 import ParticipantPage from './ParticipantPage';
 
 type RegistrationData = {
@@ -9,6 +9,7 @@ type RegistrationData = {
     offered_seats: number | null;
     status: string;
     travel_option: {
+        id: string;
         place_name: string;
         departure_time: string;
         direction: string;
@@ -35,12 +36,14 @@ function formatDate(value: string) {
     }).format(new Date(value));
 }
 
-export default function PersonalEventPage({ token }: { token: string }) {
+export default function PersonalEventPage({token}: { token: string }) {
     const [data, setData] = useState<PersonalEventData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [registrationMessage, setRegistrationMessage] = useState('');
     const [reload, setReload] = useState(0);
+    const [editingRegistration, setEditingRegistration] =
+        useState<RegistrationData | null>(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -103,38 +106,66 @@ export default function PersonalEventPage({ token }: { token: string }) {
     ) ?? [];
 
     return (
-            <ParticipantPage
-                firstName={!loading && !error && data ? data.firstName : undefined}
-                event={!loading && !error && data ? data.event : undefined}
-            >
-                {registrationMessage && (
-                    <p role="status">{registrationMessage}</p>
-                )}
+        <ParticipantPage
+            firstName={!loading && !error && data ? data.firstName : undefined}
+            event={!loading && !error && data ? data.event : undefined}
+        >
+            {registrationMessage && (
+                <p role="status">{registrationMessage}</p>
+            )}
 
-                {loading && <p role="status">Hämtar din eventsida...</p>}
+            {loading && <p role="status">Hämtar din eventsida...</p>}
 
-                {error && (
-                    <div>
-                        <p className="error" role="alert">{error}</p>
-                        <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={() => setReload(value => value + 1)}
-                        >
-                            Försök hämta sidan igen
-                        </button>
-                    </div>
-                )}
+            {error && (
+                <div>
+                    <p className="error" role="alert">{error}</p>
+                    <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => setReload(value => value + 1)}
+                    >
+                        Försök hämta sidan igen
+                    </button>
+                </div>
+            )}
 
-                {!loading && !error && data && (
-                    <>
+            {!loading && !error && data && (
+                <>
+                {editingRegistration ? (
+                    <article className="event-card">
+                        <h2>Redigera anmälan</h2>
 
-                        {outboundRegistrations.length > 0 ? (
-                            <article className="event-card detail-card">
-                                <h2>Din samåkningsanmälan</h2>
+                        <ParticipantForm
+                            token={token}
+                            registrationId={editingRegistration.id}
+                            initialRole={editingRegistration.role}
+                            initialTravelOptionId={
+                                editingRegistration.travel_option.id
+                            }
+                            initialOfferedSeats={
+                                editingRegistration.offered_seats
+                            }
+                            travelOptions={data.event.travel_options}
+                            onCreated={() => {
+                                setEditingRegistration(null);
+                                setRegistrationMessage(
+                                    'Anmälan har uppdaterats.'
+                                );
+                                setReload(v => v + 1);
+                            }}
+                            onCancel={() => {
+                                setEditingRegistration(null);
+                            }}
+                        />
+                    </article>
+                ) : outboundRegistrations.length > 0 ? (
+                        <article className="event-card detail-card">
+                            <h2>Din samåkningsanmälan</h2>
 
-                                {outboundRegistrations.map(registration => (
-                                    <dl key={registration.id}>
+                            {outboundRegistrations.map(registration => (
+                                <div key={registration.id}>
+
+                                    <dl>
                                         <dt>Roll</dt>
                                         <dd>
                                             {registration.role === 'DRIVER'
@@ -171,29 +202,105 @@ export default function PersonalEventPage({ token }: { token: string }) {
                                                 : registration.status}
                                         </dd>
                                     </dl>
-                                ))}
-                            </article>
-                        ) : (
-                            <article className="event-card">
-                                <h2>Anmäl dig till samåkning</h2>
 
-                                <ParticipantForm
-                                    token={token}
-                                    travelOptions={data.event.travel_options}
-                                    onCreated={() => {
-                                        setRegistrationMessage(
-                                            'Din samåkningsanmälan har sparats.'
-                                        );
-                                        setReload(value => value + 1);
-                                    }}
-                                    onCancel={() => {
-                                        setRegistrationMessage('');
-                                    }}
-                                />
-                            </article>
-                        )}
-                    </>
-                )}
-            </ParticipantPage>
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            gap: '1rem',
+                                            marginTop: '1rem'
+                                        }}
+                                    >
+                                        <button
+                                            className="secondary-button"
+                                            onClick={() => {
+                                                setEditingRegistration(registration);
+                                            }}
+                                        >
+                                            Redigera
+                                        </button>
+
+                                        <button
+                                            className="secondary-button"
+                                            onClick={async () => {
+
+                                                if (
+                                                    !confirm(
+                                                        'Är du säker på att du vill ta bort din anmälan?'
+                                                    )
+                                                ) {
+                                                    return;
+                                                }
+
+                                                try {
+
+                                                    const response =
+                                                        await fetch(
+                                                            `/api/events/access/${encodeURIComponent(
+                                                                token
+                                                            )}/registrations/${registration.id}`,
+                                                            {
+                                                                method: 'DELETE',
+                                                            }
+                                                        );
+
+                                                    const data =
+                                                        await response.json();
+
+                                                    if (!response.ok) {
+
+                                                        alert(
+                                                            data.message ??
+                                                            'Kunde inte ta bort anmälan.'
+                                                        );
+
+                                                        return;
+                                                    }
+
+                                                    setRegistrationMessage(
+                                                        'Anmälan har tagits bort.'
+                                                    );
+
+                                                    setReload(
+                                                        value => value + 1
+                                                    );
+
+                                                } catch {
+
+                                                    alert(
+                                                        'Kunde inte ta bort anmälan.'
+                                                    );
+                                                }
+                                            }}
+                                        >
+                                            Ta bort
+                                        </button>
+
+                                    </div>
+
+                                </div>
+                            ))}
+                        </article>
+                    ) : (
+                        <article className="event-card">
+                            <h2>Anmäl dig till samåkning</h2>
+
+                            <ParticipantForm
+                                token={token}
+                                travelOptions={data.event.travel_options}
+                                onCreated={() => {
+                                    setRegistrationMessage(
+                                        'Din samåkningsanmälan har sparats.'
+                                    );
+                                    setReload(value => value + 1);
+                                }}
+                                onCancel={() => {
+                                    setRegistrationMessage('');
+                                }}
+                            />
+                        </article>
+                    )}
+                </>
+            )}
+        </ParticipantPage>
     );
 }

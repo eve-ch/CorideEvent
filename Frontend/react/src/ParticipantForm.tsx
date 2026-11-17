@@ -13,6 +13,11 @@ type ParticipantFormProps = {
     travelOptions: TravelOptionData[];
     onCreated: () => void;
     onCancel: () => void;
+
+    registrationId?: string;
+    initialRole?: string;
+    initialTravelOptionId?: string;
+    initialOfferedSeats?: number | null;
 };
 
 function ParticipantForm({
@@ -20,10 +25,14 @@ function ParticipantForm({
                              travelOptions,
                              onCreated,
                              onCancel,
+                             registrationId,
+                             initialRole,
+                             initialTravelOptionId,
+                             initialOfferedSeats,
                          }: ParticipantFormProps) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
-    const [role, setRole] = useState('PASSENGER');
+    const [role, setRole] = useState(initialRole ?? 'PASSENGER');
 
     const submitting = useRef(false);
 
@@ -72,12 +81,13 @@ function ParticipantForm({
 
         try {
             const response = await fetch(
-                `/api/events/access/${encodeURIComponent(token)}/registrations`,
+                registrationId
+                    ? `/api/events/access/${encodeURIComponent(token)}/registrations/${registrationId}`
+                    : `/api/events/access/${encodeURIComponent(token)}/registrations`,
                 {
-                    method: 'POST',
+                    method: registrationId ? 'PUT' : 'POST',
                     headers: {
-                        'Content-Type':
-                            'application/json',
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         travelOptionId: travelOption,
@@ -163,6 +173,7 @@ function ParticipantForm({
                     id="travelOption"
                     name="travelOption"
                     required
+                    defaultValue={initialTravelOptionId}
                 >
                     <option value="">
                         Välj startplats
@@ -194,7 +205,7 @@ function ParticipantForm({
                         type="number"
                         min="1"
                         max="15"
-                        defaultValue="1"
+                        defaultValue={initialOfferedSeats ?? 1}
                         required
                     />
                 </div>
@@ -220,7 +231,9 @@ function ParticipantForm({
             >
                 {saving
                     ? 'Sparar...'
-                    : 'Anmäl mig'}
+                    : registrationId
+                        ? 'Spara ändringar'
+                        : 'Anmäl mig'}
             </button>
 
             <button

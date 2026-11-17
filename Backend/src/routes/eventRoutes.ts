@@ -27,7 +27,7 @@ eventRoutes.get('/', async (_req, res) => {
                 organizer_id: organizer.id,
             },
             orderBy: {
-                starts_at: 'asc',
+                starts_at: 'desc',
             },
         });
 
