@@ -126,6 +126,99 @@ eventRoutes.post('/', async (req, res) => {
         });
     }
 });
+eventRoutes.put('/:id', async(req, res) => {
+    const body = req.body;
+
+    try{
+        const organizer = await getTestOrganizer();
+
+        const existingEvent = await prisma.event.findFirst({
+            where: {
+                id: req.params.id,
+                organizer_id: organizer.id,
+            },
+        });
+
+        if (!existingEvent) {
+            res.status(404).json({
+                message: 'Eventet hittades inte.',
+            });
+            return;
+        }
+
+        const updatedEvent = await prisma.event.update({
+            where: {
+                id: req.params.id,
+            },
+            data: {
+                name: body.name,
+                description: body.description || null,
+                event_location: body.eventLocation,
+                starts_at: new Date(body.startsAt),
+                application_deadline: new Date(
+                    body.applicationDeadline
+                ),
+            },
+        });
+
+        res.json(updatedEvent);
+    } catch(error){
+        console.error(
+            'Kunde inte uppdatera event:',
+            error
+        );
+
+        res.status(500).json({
+            message: 'Kunde inte uppdatera event.',
+        });
+    }
+});
+eventRoutes.delete('/:id', async(req, res) => {
+    try{
+        const organizer = await getTestOrganizer();
+        const event = await prisma.event.findFirst({
+            where: {
+                id: req.params.id,
+                organizer_id: organizer.id,
+            },
+        });
+        if (!event) {
+            res.status(404).json({
+                message: 'Eventet hittades inte.',
+            })
+            return;
+        }
+        await prisma.$transaction(async  transaction => {
+            await transaction.rideRegistration.deleteMany({
+                where: {
+                    event_id: event.id,
+                },
+            });
+            await transaction.personalAccessLink.deleteMany({
+                where: {
+                    event_id: event.id,
+                },
+            });
+            await transaction.travelOption.deleteMany({
+                where: {
+                    event_id: event.id,
+                },
+            });
+            await transaction.event.delete({
+                where: {
+                    id: event.id,
+                },
+            });
+        });
+        res.status(204).send();
+    } catch(error){
+        console.error('Kunde inte ta bort event:', error);
+
+        res.status(500).json({
+            message: 'Kunde inte ta bort event.',
+        });
+    }
+});
 eventRoutes.get('/public/:shareToken', async (req, res) => {
     try {
         const event = await prisma.event.findUnique({
