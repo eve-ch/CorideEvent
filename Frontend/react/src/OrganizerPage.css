@@ -278,3 +278,8 @@ textarea:focus-visible {
   border-radius: 12px;
   padding: 12px;
 }
+
+.logout-button {
+  width: auto;
+  padding: 10px 16px;
+}

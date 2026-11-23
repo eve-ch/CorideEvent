@@ -32,3 +32,9 @@ replay_pid*
 .devin/
 
 node_modules/
+
+# Local environment variables
+.env
+
+# IntelliJ IDEA project files
+.idea/
