@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Här börjar tabellerna/modeller
+
+model Organizer {
+    id              String      @id     @default(uuid())
+    name            String
+    email           String      @unique
+    password_hash   String
+    events          Event[]
+}
+
+model Event {
+    id                      String                  @id     @default(uuid())
+    organizer_id            String
+    organizer               Organizer               @relation(fields: [organizer_id], references: [id])
+    name                    String
+    description             String?
+    event_location          String
+    starts_at               DateTime
+    application_deadline    DateTime
+    share_token             String                  @unique
+    matching_status         String
+    travel_options          TravelOption[]
+    personal_access_links   PersonalAccessLink[]
+    ride_registrations      RideRegistration[]
+}
+
+model TravelOption {
+    id                  String             @id @default(uuid())
+    event_id            String
+    event               Event              @relation(fields: [event_id], references: [id])
+    place_name          String
+    departure_time      DateTime
+    direction           String
+    ride_registrations  RideRegistration[]
+}
+
+model Participant {
+    id                      String                  @id @default(uuid())
+    first_name              String
+    last_name               String
+    email                   String                  @unique
+    personal_access_links   PersonalAccessLink[]
+    ride_registrations      RideRegistration[]
+}
+
+model PersonalAccessLink {
+  id                String          @id @default(uuid())
+  event_id          String
+  event             Event           @relation(fields: [event_id], references: [id])
+  participant_id    String
+  participant       Participant     @relation(fields: [participant_id], references: [id])
+  token_hash        String          @unique
+  expires_at        DateTime
+  revoked_at        DateTime?
+}
+
+model RideRegistration {
+    id                  String              @id @default(uuid())
+    event_id            String
+    event               Event               @relation(fields: [event_id], references: [id])
+    participant_id      String
+    participant         Participant         @relation(fields: [participant_id], references: [id])
+    travel_option_id    String
+    travel_option       TravelOption        @relation(fields: [travel_option_id], references: [id])
+    role                String
+    offered_seats       Int?
+    status              String
+    created_at          DateTime            @default(now())
+    updated_at          DateTime            @updatedAt
+    driver_carpool      Carpool?            @relation("DriverRegistration")
+    carpool_passenger   CarpoolPassenger?
+}
+
+model Carpool {
+    id                      String                  @id @default(uuid())
+    driver_registration_id  String                  @unique
+    driver_registration     RideRegistration        @relation("DriverRegistration", fields: [driver_registration_id], references: [id])
+    passengers              CarpoolPassenger[]
+}
+
+model CarpoolPassenger {
+    carpool_id                  String
+    carpool                     Carpool             @relation(fields: [carpool_id], references: [id])
+    passenger_registration_id   String              @unique
+    passenger_registration      RideRegistration    @relation(fields: [passenger_registration_id], references: [id])
+
+    @@id([carpool_id, passenger_registration_id])
+}

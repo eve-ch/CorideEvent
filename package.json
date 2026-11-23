@@ -1,0 +1,34 @@
+{
+  "name": "corideevent",
+  "version": "1.0.0",
+  "description": "In Sweden, we are poor at ridesharing; often, there is only one person in the car—the driver. Can ridesharing lead to saved resources for both the environment and the wallet? The threshold for starting to rideshare and changing current habits can be high, so the question is: how can we encourage more people to rideshare?",
+  "main": "index.js",
+  "scripts": {
+    "start": "tsx Backend/src/server.ts",
+    "dev": "tsx watch Backend/src/server.ts",
+    "build": "npm --prefix Frontend/react run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eve-ch/CorideEvent.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/eve-ch/CorideEvent/issues"
+  },
+  "homepage": "https://github.com/eve-ch/CorideEvent#readme",
+  "devDependencies": {
+    "@prisma/client": "^6.19.3",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.4",
+    "prisma": "^6.19.3",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1"
+  }
+}
