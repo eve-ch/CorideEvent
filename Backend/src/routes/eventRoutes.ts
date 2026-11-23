@@ -4,27 +4,55 @@ import { randomUUID } from 'node:crypto';
 
 export const eventRoutes = Router();
 
-// Tillfällig arrangör för lokal testning.
-// Ersätts med den inloggade arrangören när inloggning finns.
-async function getTestOrganizer() {
-    return prisma.organizer.upsert({
-        where: { email: 'test@example.com' },
-        update: {},
-        create: {
-            name: 'Testarrangör',
-            email: 'test@example.com',
-            password_hash: 'LOCAL_TEST_NO_LOGIN',
-        },
-    });
-}
+eventRoutes.get('/', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
 
-eventRoutes.get('/', async (_req, res) => {
+    const organizerId = req.session.organizerId;
+
+    if (!organizerId) {
+        res.status(401).json({
+            message: 'Du måste vara inloggad.',
+        });
+        return;
+    }
+
     try {
-        const organizer = await getTestOrganizer();
+        const events = await prisma.event.findMany({
+            where: {
+                organizer_id: organizerId,
+            },
+            orderBy: {
+                starts_at: 'asc',
+            },
+        });
+
+        res.json(events);
+    } catch (error) {
+        console.error('Kunde inte hämta event:', error);
+        res.status(500).json({
+            message: 'Kunde inte hämta event.',
+        });
+    }
+});
+
+eventRoutes.get('/', async (req, res) => {
+
+    res.setHeader('Cache-Control', 'no-store');
+
+    const organizerId = req.session.organizerId;
+
+    if (!organizerId) {
+        res.status(401).json({
+            message: 'Du måste vara inloggad.',
+        });
+        return;
+    }
+
+    try {
 
         const events = await prisma.event.findMany({
             where: {
-                organizer_id: organizer.id,
+                organizer_id: organizerId,
             },
             orderBy: {
                 starts_at: 'desc',
@@ -41,6 +69,16 @@ eventRoutes.get('/', async (_req, res) => {
 });
 
 eventRoutes.post('/', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+
+    const organizerId = req.session.organizerId;
+
+    if (!organizerId) {
+        res.status(401).json({
+            message: 'Du måste vara inloggad.',
+        });
+        return;
+    }
     const body = req.body;
 
     if (
@@ -94,11 +132,10 @@ eventRoutes.post('/', async (req, res) => {
     }
 
     try {
-        const organizer = await getTestOrganizer();
 
         const event = await prisma.event.create({
             data: {
-                organizer_id: organizer.id,
+                organizer_id: organizerId,
                 name,
                 description: description || null,
                 event_location: location,

@@ -94,6 +94,23 @@ function OrganizerPage() {
     }
   }
 
+  async function handleLogout() {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        setError('Kunde inte logga ut. Försök igen.');
+        return;
+      }
+
+      window.location.replace('/');
+    } catch {
+      setError('Kunde inte kontakta servern för att logga ut.');
+    }
+  }
+
   return (
       <div className="app">
         <header>
@@ -101,13 +118,7 @@ function OrganizerPage() {
             CO<span>R</span>IDE
           </div>
           <span className="organizer-label">Arrangör</span>
-          <button
-              type="button"
-              className="secondary-button logout-button"
-              onClick={() => window.location.assign('/')}
-          >
-            Logga ut
-          </button>
+          <button type="button" className="secondary-button logout-button" onClick={handleLogout}>Logga ut</button>
         </header>
 
         <div className="page-title">
