@@ -6,7 +6,8 @@
   "scripts": {
     "start": "tsx Backend/src/server.ts",
     "dev": "tsx watch Backend/src/server.ts",
-    "build": "npm --prefix Frontend/react run build"
+    "build": "npm --prefix Frontend/react run build",
+    "setup-account": "tsx Backend/scripts/createTestOrganizer.ts"
   },
   "repository": {
     "type": "git",
@@ -22,13 +23,16 @@
   "devDependencies": {
     "@prisma/client": "^6.19.3",
     "@types/express": "^5.0.6",
-    "@types/node": "^26.6.4",
+    "@types/express-session": "^1.19.0",
+    "@types/node": "^26.6.6",
     "prisma": "^6.19.3",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.5",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "express-session": "^1.19.0"
   }
 }
