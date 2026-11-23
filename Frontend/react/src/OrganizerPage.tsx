@@ -101,6 +101,13 @@ function OrganizerPage() {
             CO<span>R</span>IDE
           </div>
           <span className="organizer-label">Arrangör</span>
+          <button
+              type="button"
+              className="secondary-button logout-button"
+              onClick={() => window.location.assign('/')}
+          >
+            Logga ut
+          </button>
         </header>
 
         <div className="page-title">
