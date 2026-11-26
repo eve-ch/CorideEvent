@@ -55,7 +55,7 @@ export function validateEvent(
     if (
         !name || name.length > 200 ||
         !location || location.length > 300 ||
-        description.length > 5000
+        !description || description.length > 5000
     ) {
         return {
             valid: false,
