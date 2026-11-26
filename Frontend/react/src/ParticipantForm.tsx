@@ -34,8 +34,9 @@ function ParticipantForm({
     const [error, setError] = useState('');
     const [role, setRole] = useState(initialRole ?? 'PASSENGER');
     const [wantsReturnTrip, setWantsReturnTrip] = useState(false);
-    const [returnRole, setReturnRole] = useState('PASSENGER');
-    const [returnOfferedSeats, setReturnOfferedSeats] = useState(1);
+    const [returnOfferedSeats, setReturnOfferedSeats] = useState(
+        initialOfferedSeats ?? 1
+    );
 
     const submitting = useRef(false);
 
@@ -92,24 +93,19 @@ function ParticipantForm({
                     headers: {
                         'Content-Type': 'application/json',
                     },
+
                     body: JSON.stringify({
                         travelOptionId: travelOption,
                         role,
                         offeredSeats,
-
                         wantsReturnTrip,
-
-                        returnRole:
-                            wantsReturnTrip
-                                ? returnRole
-                                : null,
 
                         returnOfferedSeats:
                             wantsReturnTrip &&
-                            returnRole === 'DRIVER'
+                            role === 'DRIVER'
                                 ? returnOfferedSeats
                                 : null,
-                    }),
+                    })
                 }
             );
 
@@ -209,6 +205,24 @@ function ParticipantForm({
                 </select>
             </div>
 
+            {role === 'DRIVER' && (
+                <div>
+                    <label htmlFor="offeredSeats">
+                        Antal passagerarplatser i bilen *
+                    </label>
+
+                    <input
+                        id="offeredSeats"
+                        name="offeredSeats"
+                        type="number"
+                        min="1"
+                        max="15"
+                        defaultValue={initialOfferedSeats ?? 1}
+                        required
+                    />
+                </div>
+            )}
+
             <h3>Hemresa</h3>
 
             <div>
@@ -243,79 +257,23 @@ function ParticipantForm({
                 </div>
             </div>
 
-            {wantsReturnTrip && (
+            {role === 'DRIVER' && wantsReturnTrip && (
                 <div>
-                    <label>
-                        Jag reser hem som *
-                    </label>
-
-                    <div className="role-selector">
-                        <button
-                            type="button"
-                            className={
-                                returnRole === 'PASSENGER'
-                                    ? 'role-card selected'
-                                    : 'role-card'
-                            }
-                            onClick={() =>
-                                setReturnRole('PASSENGER')
-                            }
-                        >
-                            Passagerare
-                        </button>
-
-                        <button
-                            type="button"
-                            className={
-                                returnRole === 'DRIVER'
-                                    ? 'role-card selected'
-                                    : 'role-card'
-                            }
-                            onClick={() =>
-                                setReturnRole('DRIVER')
-                            }
-                        >
-                            Förare
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {wantsReturnTrip &&
-                returnRole === 'DRIVER' && (
-                    <div>
-                        <label htmlFor="returnOfferedSeats">
-                            Antal passagerarplatser på hemresan *
-                        </label>
-
-                        <input
-                            id="returnOfferedSeats"
-                            type="number"
-                            min="1"
-                            max="15"
-                            value={returnOfferedSeats}
-                            onChange={(e) =>
-                                setReturnOfferedSeats(
-                                    Number(e.target.value)
-                                )
-                            }
-                        />
-                    </div>
-                )}
-
-            {role === 'DRIVER' && (
-                <div>
-                    <label htmlFor="offeredSeats">
-                        Antal passagerarplatser i bilen *
+                    <label htmlFor="returnOfferedSeats">
+                        Antal passagerarplatser på hemresan *
                     </label>
 
                     <input
-                        id="offeredSeats"
-                        name="offeredSeats"
+                        id="returnOfferedSeats"
                         type="number"
                         min="1"
                         max="15"
-                        defaultValue={initialOfferedSeats ?? 1}
+                        value={returnOfferedSeats}
+                        onChange={(e) =>
+                            setReturnOfferedSeats(
+                                Number(e.target.value)
+                            )
+                        }
                         required
                     />
                 </div>

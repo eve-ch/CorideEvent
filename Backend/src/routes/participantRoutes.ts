@@ -160,36 +160,6 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
     }
 
     if (
-        wantsReturnTrip &&
-        returnRole !== 'DRIVER' &&
-        returnRole !== 'PASSENGER'
-    ) {
-        res.status(400).json({
-            message: 'Ogiltig roll för hemresa.',
-        });
-
-        return;
-    }
-
-    if (
-        wantsReturnTrip &&
-        returnRole === 'DRIVER' &&
-        (
-            typeof returnOfferedSeats !== 'number' ||
-            !Number.isInteger(returnOfferedSeats) ||
-            returnOfferedSeats < 1 ||
-            returnOfferedSeats > 15
-        )
-    ) {
-        res.status(400).json({
-            message:
-                'Antal platser på hemresan måste vara mellan 1 och 15.',
-        });
-
-        return;
-    }
-
-    if (
         role === 'DRIVER' &&
         (
             typeof body.offeredSeats !== 'number' ||
@@ -326,10 +296,10 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
                             travel_option_id:
                             returnTravelOption.id,
 
-                            role: returnRole,
+                            role: role,
 
                             offered_seats:
-                                returnRole === 'DRIVER'
+                                role === 'DRIVER'
                                     ? returnOfferedSeats
                                     : null,
 
@@ -489,11 +459,6 @@ participantRoutes.put(
         const wantsReturnTrip =
             body.wantsReturnTrip === true;
 
-        const returnRole =
-            typeof body.returnRole === 'string'
-                ? body.returnRole
-                : null;
-
         const returnOfferedSeats =
             typeof body.returnOfferedSeats === 'number'
                 ? body.returnOfferedSeats
@@ -517,14 +482,23 @@ participantRoutes.put(
         }
 
         if (
+            wantsReturnTrip &&
             role === 'DRIVER' &&
             (
-                typeof body.offeredSeats !== 'number' ||
-                !Number.isInteger(body.offeredSeats) ||
-                body.offeredSeats < 1 ||
-                body.offeredSeats > 15
+                typeof returnOfferedSeats !== 'number' ||
+                !Number.isInteger(returnOfferedSeats) ||
+                returnOfferedSeats < 1 ||
+                returnOfferedSeats > 15
             )
         ) {
+            res.status(400).json({
+                message:
+                    'Antal platser på hemresan måste vara mellan 1 och 15.',
+            });
+
+            return;
+        }
+        {
             res.status(400).json({
                 message:
                     'Antal platser måste vara ett heltal mellan 1 och 15.',
