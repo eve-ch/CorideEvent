@@ -140,6 +140,8 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
 
     const travelOptionId = body.travelOptionId.trim();
     const role = body.role;
+    const wantsReturnTrip =
+        body.wantsReturnTrip === true;
 
     if (!travelOptionId) {
         res.status(400).json({
@@ -159,6 +161,9 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
         return;
     }
 
+    console.log('offeredSeats:', body.offeredSeats);
+    console.log('typeof:', typeof body.offeredSeats);
+    
     if (
         role === 'DRIVER' &&
         (
