@@ -155,6 +155,37 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
         res.status(400).json({
             message: 'Ogiltig roll.',
         });
+
+        return;
+    }
+
+    if (
+        wantsReturnTrip &&
+        returnRole !== 'DRIVER' &&
+        returnRole !== 'PASSENGER'
+    ) {
+        res.status(400).json({
+            message: 'Ogiltig roll för hemresa.',
+        });
+
+        return;
+    }
+
+    if (
+        wantsReturnTrip &&
+        returnRole === 'DRIVER' &&
+        (
+            typeof returnOfferedSeats !== 'number' ||
+            !Number.isInteger(returnOfferedSeats) ||
+            returnOfferedSeats < 1 ||
+            returnOfferedSeats > 15
+        )
+    ) {
+        res.status(400).json({
+            message:
+                'Antal platser på hemresan måste vara mellan 1 och 15.',
+        });
+
         return;
     }
 
@@ -270,6 +301,44 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
                     status: 'REGISTERED',
                 },
             });
+
+            if (wantsReturnTrip) {
+
+                const returnTravelOption =
+                    await transaction.travelOption.findFirst({
+                        where: {
+                            event_id: link.event_id,
+                            place_name:
+                            travelOption.place_name,
+                            direction: 'FROM_EVENT',
+                        },
+                    });
+
+                if (returnTravelOption) {
+
+                    await transaction.rideRegistration.create({
+                        data: {
+                            event_id: link.event_id,
+
+                            participant_id:
+                            link.participant_id,
+
+                            travel_option_id:
+                            returnTravelOption.id,
+
+                            role: returnRole,
+
+                            offered_seats:
+                                returnRole === 'DRIVER'
+                                    ? returnOfferedSeats
+                                    : null,
+
+                            status: 'REGISTERED',
+                        },
+                    });
+
+                }
+            }
 
             return {
                 status: 201,
@@ -416,6 +485,19 @@ participantRoutes.put(
 
         const travelOptionId = body.travelOptionId.trim();
         const role = body.role;
+
+        const wantsReturnTrip =
+            body.wantsReturnTrip === true;
+
+        const returnRole =
+            typeof body.returnRole === 'string'
+                ? body.returnRole
+                : null;
+
+        const returnOfferedSeats =
+            typeof body.returnOfferedSeats === 'number'
+                ? body.returnOfferedSeats
+                : null;
 
         if (!travelOptionId) {
             res.status(400).json({

@@ -144,13 +144,22 @@ eventRoutes.post('/', async (req, res) => {
                 share_token: randomUUID(),
                 matching_status: 'NOT_STARTED',
                 travel_options: {
-                    create: {
-                        place_name: 'Standardstartplats – testalternativ',
-                        departure_time: new Date(
-                            startsAt.getTime() - 60 * 60 * 1000
-                        ),
-                        direction: 'TO_EVENT',
-                    },
+                    create: [
+                        {
+                            place_name: 'Standardstartplats – testalternativ',
+                            departure_time: new Date(
+                                startsAt.getTime() - 60 * 60 * 1000
+                            ),
+                            direction: 'TO_EVENT',
+                        },
+                        {
+                            place_name: 'Standardstartplats – testalternativ',
+                            departure_time: new Date(
+                                startsAt.getTime() + 4 * 60 * 60 * 1000
+                            ),
+                            direction: 'FROM_EVENT',
+                        },
+                    ],
                 },
             },
         });

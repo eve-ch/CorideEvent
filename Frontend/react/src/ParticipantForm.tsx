@@ -33,6 +33,9 @@ function ParticipantForm({
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [role, setRole] = useState(initialRole ?? 'PASSENGER');
+    const [wantsReturnTrip, setWantsReturnTrip] = useState(false);
+    const [returnRole, setReturnRole] = useState('PASSENGER');
+    const [returnOfferedSeats, setReturnOfferedSeats] = useState(1);
 
     const submitting = useRef(false);
 
@@ -93,6 +96,19 @@ function ParticipantForm({
                         travelOptionId: travelOption,
                         role,
                         offeredSeats,
+
+                        wantsReturnTrip,
+
+                        returnRole:
+                            wantsReturnTrip
+                                ? returnRole
+                                : null,
+
+                        returnOfferedSeats:
+                            wantsReturnTrip &&
+                            returnRole === 'DRIVER'
+                                ? returnOfferedSeats
+                                : null,
                     }),
                 }
             );
@@ -192,6 +208,100 @@ function ParticipantForm({
                         ))}
                 </select>
             </div>
+
+            <h3>Hemresa</h3>
+
+            <div>
+                <label>
+                    Jag vill samåka hem efter eventet *
+                </label>
+
+                <div className="role-selector">
+                    <button
+                        type="button"
+                        className={
+                            wantsReturnTrip
+                                ? 'role-card selected'
+                                : 'role-card'
+                        }
+                        onClick={() => setWantsReturnTrip(true)}
+                    >
+                        Ja
+                    </button>
+
+                    <button
+                        type="button"
+                        className={
+                            !wantsReturnTrip
+                                ? 'role-card selected'
+                                : 'role-card'
+                        }
+                        onClick={() => setWantsReturnTrip(false)}
+                    >
+                        Nej
+                    </button>
+                </div>
+            </div>
+
+            {wantsReturnTrip && (
+                <div>
+                    <label>
+                        Jag reser hem som *
+                    </label>
+
+                    <div className="role-selector">
+                        <button
+                            type="button"
+                            className={
+                                returnRole === 'PASSENGER'
+                                    ? 'role-card selected'
+                                    : 'role-card'
+                            }
+                            onClick={() =>
+                                setReturnRole('PASSENGER')
+                            }
+                        >
+                            Passagerare
+                        </button>
+
+                        <button
+                            type="button"
+                            className={
+                                returnRole === 'DRIVER'
+                                    ? 'role-card selected'
+                                    : 'role-card'
+                            }
+                            onClick={() =>
+                                setReturnRole('DRIVER')
+                            }
+                        >
+                            Förare
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {wantsReturnTrip &&
+                returnRole === 'DRIVER' && (
+                    <div>
+                        <label htmlFor="returnOfferedSeats">
+                            Antal passagerarplatser på hemresan *
+                        </label>
+
+                        <input
+                            id="returnOfferedSeats"
+                            type="number"
+                            min="1"
+                            max="15"
+                            value={returnOfferedSeats}
+                            onChange={(e) =>
+                                setReturnOfferedSeats(
+                                    Number(e.target.value)
+                                )
+                            }
+                        />
+                    </div>
+                )}
 
             {role === 'DRIVER' && (
                 <div>
