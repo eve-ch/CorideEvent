@@ -35,39 +35,6 @@ eventRoutes.get('/', async (req, res) => {
     }
 });
 
-eventRoutes.get('/', async (req, res) => {
-
-    res.setHeader('Cache-Control', 'no-store');
-
-    const organizerId = req.session.organizerId;
-
-    if (!organizerId) {
-        res.status(401).json({
-            message: 'Du måste vara inloggad.',
-        });
-        return;
-    }
-
-    try {
-
-        const events = await prisma.event.findMany({
-            where: {
-                organizer_id: organizerId,
-            },
-            orderBy: {
-                starts_at: 'asc',
-            },
-        });
-
-        res.json(events);
-    } catch (error) {
-        console.error('Kunde inte hämta event:', error);
-        res.status(500).json({
-            message: 'Kunde inte hämta event.',
-        });
-    }
-});
-
 eventRoutes.post('/', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
 
