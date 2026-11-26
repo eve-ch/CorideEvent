@@ -2,6 +2,7 @@ import {Router} from 'express';
 import {prisma} from '../prisma';
 import { createHash } from 'node:crypto';
 import {isValidAccessToken, isAccessLinkExpired,} from '../validation/accessLinkValidation';
+import { validateRegistration } from '../validation/registrationValidation';
 
 export const participantRoutes = Router();
 
@@ -125,53 +126,16 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
         return;
     }
 
-    if (
-        !body ||
-        typeof body.travelOptionId !== 'string' ||
-        typeof body.role !== 'string'
-    ) {
+    const validation = validateRegistration(body);
+
+    if (validation.valid === false) {
         res.status(400).json({
-            message: 'Anmälans uppgifter är ogiltiga.',
+            message: validation.message,
         });
         return;
     }
 
-    const travelOptionId = body.travelOptionId.trim();
-    const role = body.role;
-
-    if (!travelOptionId) {
-        res.status(400).json({
-            message: 'Välj ett resealternativ.',
-        });
-        return;
-    }
-
-    if (
-        role !== 'DRIVER' &&
-        role !== 'PASSENGER'
-    ) {
-        res.status(400).json({
-            message: 'Ogiltig roll.',
-        });
-        return;
-    }
-
-    if (
-        role === 'DRIVER' &&
-        (
-            typeof body.offeredSeats !== 'number' ||
-            !Number.isInteger(body.offeredSeats) ||
-            body.offeredSeats < 1 ||
-            body.offeredSeats > 15
-        )
-    ) {
-        res.status(400).json({
-            message: 'Antal platser måste vara ett heltal mellan 1 och 15.',
-        });
-        return;
-    }
-
-    const offeredSeats = role === 'DRIVER' ? body.offeredSeats : null;
+    const { travelOptionId, role, offeredSeats } = validation.data;
 
     try {
         const tokenHash = createHash('sha256')
@@ -398,57 +362,16 @@ participantRoutes.put(
             return;
         }
 
-        if (
-            !body ||
-            typeof body.travelOptionId !== 'string' ||
-            typeof body.role !== 'string'
-        ) {
+        const validation = validateRegistration(body);
+
+        if (validation.valid === false) {
             res.status(400).json({
-                message: 'Anmälans uppgifter är ogiltiga.',
+                message: validation.message,
             });
             return;
         }
 
-        const travelOptionId = body.travelOptionId.trim();
-        const role = body.role;
-
-        if (!travelOptionId) {
-            res.status(400).json({
-                message: 'Välj ett resealternativ.',
-            });
-            return;
-        }
-
-        if (
-            role !== 'DRIVER' &&
-            role !== 'PASSENGER'
-        ) {
-            res.status(400).json({
-                message: 'Ogiltig roll.',
-            });
-            return;
-        }
-
-        if (
-            role === 'DRIVER' &&
-            (
-                typeof body.offeredSeats !== 'number' ||
-                !Number.isInteger(body.offeredSeats) ||
-                body.offeredSeats < 1 ||
-                body.offeredSeats > 15
-            )
-        ) {
-            res.status(400).json({
-                message:
-                    'Antal platser måste vara ett heltal mellan 1 och 15.',
-            });
-            return;
-        }
-
-        const offeredSeats =
-            role === 'DRIVER'
-                ? body.offeredSeats
-                : null;
+        const { travelOptionId, role, offeredSeats } = validation.data;
 
         try {
             const tokenHash = createHash('sha256')
