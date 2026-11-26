@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
 import { randomUUID } from 'node:crypto';
+import { validateEvent } from '../validation/eventValidation';
 
 export const eventRoutes = Router();
 
@@ -46,57 +47,23 @@ eventRoutes.post('/', async (req, res) => {
         });
         return;
     }
-    const body = req.body;
 
-    if (
-        !body ||
-        typeof body.name !== 'string' ||
-        typeof body.eventLocation !== 'string' ||
-        typeof body.startsAt !== 'string' ||
-        typeof body.applicationDeadline !== 'string' ||
-        (body.description !== undefined &&
-            typeof body.description !== 'string')
-    ) {
+    const result = validateEvent(req.body, new Date());
+
+    if (!result.valid) {
         res.status(400).json({
-            message: 'Eventets uppgifter är ogiltiga.',
+            message: result.message,
         });
         return;
     }
 
-    const name = body.name.trim();
-    const location = body.eventLocation.trim();
-    const description = (body.description ?? '').trim();
-    const startsAt = new Date(body.startsAt);
-    const deadline = new Date(body.applicationDeadline);
-
-    if (
-        !name || name.length > 200 ||
-        !location || location.length > 300 ||
-        description.length > 5000
-    ) {
-        res.status(400).json({
-            message: 'Kontrollera eventnamn, plats och beskrivning.',
-        });
-        return;
-    }
-
-    if (
-        !Number.isFinite(startsAt.getTime()) ||
-        !Number.isFinite(deadline.getTime())
-    ) {
-        res.status(400).json({
-            message: 'Ange giltiga datum och tider.',
-        });
-        return;
-    }
-
-    if (startsAt <= new Date() || deadline > startsAt) {
-        res.status(400).json({
-            message:
-                'Starten måste vara i framtiden och sista anmälan senast vid starten.',
-        });
-        return;
-    }
+    const {
+        name,
+        location,
+        description,
+        startsAt,
+        deadline,
+    } = result.data;
 
     try {
 
