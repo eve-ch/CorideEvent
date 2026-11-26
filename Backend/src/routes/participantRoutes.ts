@@ -1,6 +1,7 @@
 import {Router} from 'express';
 import {prisma} from '../prisma';
 import { createHash } from 'node:crypto';
+import {isValidAccessToken, isAccessLinkExpired,} from '../validation/accessLinkValidation';
 
 export const participantRoutes = Router();
 
@@ -9,7 +10,7 @@ participantRoutes.get('/access/:token', async (req, res) => {
 
     const token = req.params.token;
 
-    if (!/^[a-f0-9]{64}$/.test(token)) {
+    if (!isValidAccessToken(token)) {
         res.status(404).json({
             message: 'Den personliga länken är ogiltig.',
         });
@@ -65,10 +66,7 @@ participantRoutes.get('/access/:token', async (req, res) => {
             return;
         }
 
-        if (
-            link.revoked_at !== null ||
-            link.expires_at <= new Date()
-        ) {
+        if (isAccessLinkExpired(link, new Date())) {
             res.status(410).json({
                 message: 'Den personliga länken gäller inte längre.',
             });
@@ -120,7 +118,7 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
     const token = req.params.token;
     const body = req.body;
 
-    if (!/^[a-f0-9]{64}$/.test(token)) {
+    if (!isValidAccessToken(token)) {
         res.status(404).json({
             message: 'Den personliga länken är ogiltig.',
         });
@@ -207,7 +205,7 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
 
             const now = new Date();
 
-            if (link.revoked_at !== null || link.expires_at <= now) {
+            if (isAccessLinkExpired(link, now)) {
                 return {
                     status: 410,
                     body: {
@@ -295,7 +293,7 @@ participantRoutes.delete(
     async (req, res) => {
         const token = req.params.token;
 
-        if (!/^[a-f0-9]{64}$/.test(token)) {
+        if (!isValidAccessToken(token)) {
             res.status(404).json({
                 message: 'Den personliga länken är ogiltig.',
             });
@@ -332,10 +330,7 @@ participantRoutes.delete(
 
             const now = new Date();
 
-            if (
-                link.revoked_at !== null ||
-                link.expires_at <= now
-            ) {
+            if (isAccessLinkExpired(link, now)) {
                 res.status(410).json({
                     message: 'Den personliga länken gäller inte längre.',
                 });
@@ -396,7 +391,7 @@ participantRoutes.put(
         const registrationId = req.params.registrationId;
         const body = req.body;
 
-        if (!/^[a-f0-9]{64}$/.test(token)) {
+        if (!isValidAccessToken(token)) {
             res.status(404).json({
                 message: 'Den personliga länken är ogiltig.',
             });
@@ -487,10 +482,7 @@ participantRoutes.put(
 
             const now = new Date();
 
-            if (
-                link.revoked_at !== null ||
-                link.expires_at <= now
-            ) {
+            if (isAccessLinkExpired(link, now)) {
                 res.status(410).json({
                     message:
                         'Den personliga länken gäller inte längre.',
