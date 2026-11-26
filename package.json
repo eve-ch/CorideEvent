@@ -7,7 +7,8 @@
     "start": "tsx Backend/src/server.ts",
     "dev": "tsx watch Backend/src/server.ts",
     "build": "npm --prefix Frontend/react run build",
-    "setup-account": "tsx Backend/scripts/createTestOrganizer.ts"
+    "setup-account": "tsx Backend/scripts/createTestOrganizer.ts",
+    "test:unit": "tsx --test tests/unit-tests/*.test.ts"
   },
   "repository": {
     "type": "git",
