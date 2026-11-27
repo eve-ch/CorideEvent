@@ -36,7 +36,10 @@ function formatDate(value: string) {
     }).format(new Date(value));
 }
 
-export default function PersonalEventPage({token}: { token: string }) {
+export default function PersonalEventPage({token,eventId}: {
+    token: string;
+    eventId?: string;
+}) {
     const [data, setData] = useState<PersonalEventData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -54,13 +57,14 @@ export default function PersonalEventPage({token}: { token: string }) {
             setData(null);
 
             try {
-                const response = await fetch(
-                    `/api/events/access/${encodeURIComponent(token)}`,
-                    {
-                        signal: controller.signal,
-                        cache: 'no-store',
-                    }
-                );
+                const url = eventId
+                    ? `/api/events/access/${encodeURIComponent(token)}/events/${eventId}`
+                    : `/api/events/access/${encodeURIComponent(token)}`;
+
+                const response = await fetch(url, {
+                    signal: controller.signal,
+                    cache: 'no-store',
+                });
 
                 if (!response.ok) {
                     if (response.status === 404) {
@@ -99,7 +103,7 @@ export default function PersonalEventPage({token}: { token: string }) {
         loadPage();
 
         return () => controller.abort();
-    }, [token, reload]);
+    }, [token, eventId, reload]);
 
     const outboundRegistrations = data?.registrations.filter(
         registration => registration.travel_option.direction === 'TO_EVENT'
@@ -107,9 +111,24 @@ export default function PersonalEventPage({token}: { token: string }) {
 
     return (
         <ParticipantPage
+            token={token}
             firstName={!loading && !error && data ? data.firstName : undefined}
             event={!loading && !error && data ? data.event : undefined}
         >
+
+            {eventId && (
+                <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => {
+                        window.location.href =
+                            `/access/${encodeURIComponent(token)}/events`;
+                    }}
+                >
+                    Tillbaka till Mina event
+                </button>
+            )}
+
             {registrationMessage && (
                 <p role="status">{registrationMessage}</p>
             )}
@@ -137,6 +156,7 @@ export default function PersonalEventPage({token}: { token: string }) {
 
                         <ParticipantForm
                             token={token}
+                            eventId={eventId}
                             registrationId={editingRegistration.id}
                             initialRole={editingRegistration.role}
                             initialTravelOptionId={
@@ -286,6 +306,7 @@ export default function PersonalEventPage({token}: { token: string }) {
 
                             <ParticipantForm
                                 token={token}
+                                eventId={eventId}
                                 travelOptions={data.event.travel_options}
                                 onCreated={() => {
                                     setRegistrationMessage(

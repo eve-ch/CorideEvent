@@ -14,6 +14,7 @@ type ParticipantFormProps = {
     onCreated: () => void;
     onCancel: () => void;
 
+    eventId?: string;
     registrationId?: string;
     initialRole?: string;
     initialTravelOptionId?: string;
@@ -25,6 +26,7 @@ function ParticipantForm({
                              travelOptions,
                              onCreated,
                              onCancel,
+                             eventId,
                              registrationId,
                              initialRole,
                              initialTravelOptionId,
@@ -95,6 +97,7 @@ function ParticipantForm({
                     },
 
                     body: JSON.stringify({
+                        eventId,
                         travelOptionId: travelOption,
                         role,
                         offeredSeats,

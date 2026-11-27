@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 
 export const participantRoutes = Router();
 
+// Visa eventet som den ursprungliga länken tillhör
 participantRoutes.get('/access/:token', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
 
@@ -114,6 +115,255 @@ participantRoutes.get('/access/:token', async (req, res) => {
     }
 });
 
+// Visa personens alla registrerade event
+participantRoutes.get(
+    '/access/:token/events',
+    async (req, res) => {
+        res.setHeader('Cache-Control', 'no-store');
+
+        const token = req.params.token;
+
+        if (!/^[a-f0-9]{64}$/.test(token)) {
+            res.status(404).json({
+                message: 'Den personliga länken är ogiltig.',
+            });
+            return;
+        }
+
+        try {
+            const tokenHash = createHash('sha256')
+                .update(token)
+                .digest('hex');
+            const link =
+                await prisma.personalAccessLink.findUnique({
+                    where: {
+                        token_hash: tokenHash,
+                    },
+                    select: {
+                        participant_id: true,
+                        expires_at: true,
+                        revoked_at: true,
+                        participant: {
+                            select: {
+                                first_name: true,
+                            },
+                        },
+                    },
+                });
+
+            if (!link) {
+                res.status(404).json({
+                    message: 'Den personliga länken är ogiltig.',
+                });
+                return;
+            }
+
+            if (
+                link.revoked_at !== null ||
+                link.expires_at <= new Date()
+            ) {
+                res.status(410).json({
+                    message:
+                        'Den personliga länken gäller inte längre.',
+                });
+                return;
+            }
+
+            const registrations =
+                await prisma.rideRegistration.findMany({
+                    where: {
+                        participant_id:
+                        link.participant_id,
+                    },
+                    select: {
+                        event: {
+                            select: {
+                                id: true,
+                                name: true,
+                                starts_at: true,
+                                event_location: true,
+                            },
+                        },
+                    },
+                });
+
+            const events = Array.from(
+                new Map(
+                    registrations.map(reg => [
+                        reg.event.id,
+                        reg.event,
+                    ])
+                ).values()
+            );
+
+            res.json({
+                firstName:
+                link.participant.first_name,
+                events,
+            });
+
+        } catch (error) {
+            console.error(
+                'Kunde inte hämta eventlista:',
+                error
+            );
+            res.status(500).json({
+                message:
+                    'Kunde inte hämta eventlista.',
+            });
+        }
+    }
+);
+
+// Visa ett specifikt valt event som eventdeltagaren klickat på
+participantRoutes.get(
+    '/access/:token/events/:eventId',
+    async (req, res) => {
+        res.setHeader('Cache-Control', 'no-store');
+
+        const token = req.params.token;
+        const eventId = req.params.eventId;
+
+        if (!/^[a-f0-9]{64}$/.test(token)) {
+            res.status(404).json({
+                message: 'Den personliga länken är ogiltig.',
+            });
+            return;
+        }
+
+        try {
+            // 1. Omvandla token till hash
+            const tokenHash = createHash('sha256')
+                .update(token)
+                .digest('hex');
+
+            // 2. Hämta den personliga länken
+            const link = await prisma.personalAccessLink.findUnique({
+                where: {
+                    token_hash: tokenHash,
+                },
+                select: {
+                    participant_id: true,
+                    expires_at: true,
+                    revoked_at: true,
+                    participant: {
+                        select: {
+                            first_name: true,
+                        },
+                    },
+                },
+            });
+
+            if (!link) {
+                res.status(404).json({
+                    message: 'Den personliga länken är ogiltig.',
+                });
+                return;
+            }
+
+            // 3. Kontrollera att länken fortfarande är giltig
+            if (
+                link.revoked_at !== null ||
+                link.expires_at <= new Date()
+            ) {
+                res.status(410).json({
+                    message: 'Den personliga länken gäller inte längre.',
+                });
+                return;
+            }
+
+            // 4. Kontrollera att deltagaren är registrerad till eventet
+            const registration = await prisma.rideRegistration.findFirst({
+                where: {
+                    participant_id: link.participant_id,
+                    event_id: eventId,
+                },
+            });
+
+            if (!registration) {
+                res.status(404).json({
+                    message: 'Eventet hittades inte.',
+                });
+                return;
+            }
+
+            // 5. Hämta information om det valda eventet
+            const event = await prisma.event.findUnique({
+                where: {
+                    id: eventId,
+                },
+                select: {
+                    name: true,
+                    description: true,
+                    event_location: true,
+                    starts_at: true,
+                    application_deadline: true,
+                    travel_options: {
+                        select: {
+                            id: true,
+                            place_name: true,
+                            departure_time: true,
+                            direction: true,
+                        },
+                        orderBy: {
+                            departure_time: 'asc',
+                        },
+                    },
+                },
+            });
+
+            if (!event) {
+                res.status(404).json({
+                    message: 'Eventet hittades inte.',
+                });
+                return;
+            }
+
+            // 6. Hämta deltagarens alla registreringar till eventet
+            const registrations = await prisma.rideRegistration.findMany({
+                where: {
+                    participant_id: link.participant_id,
+                    event_id: eventId,
+                },
+                select: {
+                    id: true,
+                    role: true,
+                    offered_seats: true,
+                    status: true,
+                    travel_option: {
+                        select: {
+                            id: true,
+                            place_name: true,
+                            departure_time: true,
+                            direction: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    created_at: 'asc',
+                },
+            });
+
+            // 7. Skicka informationen till frontend
+            res.json({
+                firstName: link.participant.first_name,
+                event,
+                registrations,
+            });
+
+        } catch (error) {
+            console.error(
+                'Kunde inte hämta valt event:',
+                error
+            );
+
+            res.status(500).json({
+                message: 'Kunde inte öppna eventet.',
+            });
+        }
+    }
+);
+
 participantRoutes.post('/access/:token/registrations', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
 
@@ -181,6 +431,26 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
 
     const offeredSeats = role === 'DRIVER' ? body.offeredSeats : null;
 
+    const returnOfferedSeats =
+        typeof body.returnOfferedSeats === 'number'
+            ? body.returnOfferedSeats
+            : null;
+
+    if (
+        wantsReturnTrip &&
+        role === 'DRIVER' &&
+        (
+            !Number.isInteger(returnOfferedSeats) ||
+            returnOfferedSeats! < 1 ||
+            returnOfferedSeats! > 15
+        )
+    ) {
+        res.status(400).json({
+            message: 'Antal platser på hemresan måste vara mellan 1 och 15.',
+        });
+        return;
+    }
+
     try {
         const tokenHash = createHash('sha256')
             .update(token)
@@ -222,7 +492,43 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
                 };
             }
 
-            if (now > link.event.application_deadline) {
+            const eventId =
+                typeof body.eventId === 'string' && body.eventId.trim()
+                    ? body.eventId.trim()
+                    : link.event_id;
+
+// Om det är ett annat event än det ursprungliga,
+// kontrollera att deltagaren redan är registrerad där.
+            if (eventId !== link.event_id) {
+                const participantHasEvent =
+                    await transaction.rideRegistration.findFirst({
+                        where: {
+                            event_id: eventId,
+                            participant_id: link.participant_id,
+                        },
+                    });
+
+                if (!participantHasEvent) {
+                    return {
+                        status: 404,
+                        body: { message: 'Eventet hittades inte.' },
+                    };
+                }
+            }
+
+            const event = await transaction.event.findUnique({
+                where: { id: eventId },
+                select: { application_deadline: true },
+            });
+
+            if (!event) {
+                return {
+                    status: 404,
+                    body: { message: 'Eventet hittades inte.' },
+                };
+            }
+
+            if (now > event.application_deadline) {
                 return {
                     status: 400,
                     body: { message: 'Anmälningstiden har gått ut.' },
@@ -232,7 +538,7 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
             const travelOption = await transaction.travelOption.findFirst({
                 where: {
                     id: travelOptionId,
-                    event_id: link.event_id,
+                    event_id: eventId,
                     direction: 'TO_EVENT',
                 },
             });
@@ -249,7 +555,7 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
             // Tillåt bara en ditreseanmälan per deltagare och event.
             const existing = await transaction.rideRegistration.findFirst({
                 where: {
-                    event_id: link.event_id,
+                    event_id: eventId,
                     participant_id: link.participant_id,
                     travel_option: {
                         direction: 'TO_EVENT',
@@ -268,7 +574,7 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
 
             const registration = await transaction.rideRegistration.create({
                 data: {
-                    event_id: link.event_id,
+                    event_id: eventId,
                     participant_id: link.participant_id,
                     travel_option_id: travelOption.id,
                     role,
@@ -282,7 +588,7 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
                 const returnTravelOption =
                     await transaction.travelOption.findFirst({
                         where: {
-                            event_id: link.event_id,
+                            event_id: eventId,
                             place_name:
                             travelOption.place_name,
                             direction: 'FROM_EVENT',
@@ -293,7 +599,7 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
 
                     await transaction.rideRegistration.create({
                         data: {
-                            event_id: link.event_id,
+                            event_id: eventId,
 
                             participant_id:
                             link.participant_id,
@@ -386,27 +692,40 @@ participantRoutes.delete(
                 return;
             }
 
-            if (
-                now > link.event.application_deadline
-            ) {
-                res.status(400).json({
-                    message: 'Anmälningstiden har gått ut.',
-                });
-                return;
-            }
-
             const registration =
                 await prisma.rideRegistration.findFirst({
                     where: {
                         id: req.params.registrationId,
                         participant_id: link.participant_id,
-                        event_id: link.event_id,
                     },
                 });
 
             if (!registration) {
                 res.status(404).json({
                     message: 'Anmälan hittades inte.',
+                });
+                return;
+            }
+
+            const event = await prisma.event.findUnique({
+                where: {
+                    id: registration.event_id,
+                },
+                select: {
+                    application_deadline: true,
+                },
+            });
+
+            if (!event) {
+                res.status(404).json({
+                    message: 'Eventet hittades inte.',
+                });
+                return;
+            }
+
+            if (now > event.application_deadline) {
+                res.status(400).json({
+                    message: 'Anmälningstiden har gått ut.',
                 });
                 return;
             }
@@ -495,18 +814,26 @@ participantRoutes.put(
                 returnOfferedSeats < 1 ||
                 returnOfferedSeats > 15
             )
-        ) {
-            res.status(400).json({
-                message:
-                    'Antal platser på hemresan måste vara mellan 1 och 15.',
-            });
-
-            return;
-        }
+        )
         {
             res.status(400).json({
                 message:
                     'Antal platser måste vara ett heltal mellan 1 och 15.',
+            });
+            return;
+        }
+
+        if (
+            role === 'DRIVER' &&
+            (
+                typeof body.offeredSeats !== 'number' ||
+                !Number.isInteger(body.offeredSeats) ||
+                body.offeredSeats < 1 ||
+                body.offeredSeats > 15
+            )
+        ) {
+            res.status(400).json({
+                message: 'Antal platser måste vara ett heltal mellan 1 och 15.',
             });
             return;
         }
@@ -559,7 +886,39 @@ participantRoutes.put(
                 return;
             }
 
-            if (now > link.event.application_deadline) {
+            const eventId =
+                typeof body.eventId === 'string' && body.eventId.trim()
+                    ? body.eventId.trim()
+                    : link.event_id;
+
+            const participantHasEvent =
+                await prisma.rideRegistration.findFirst({
+                    where: {
+                        event_id: eventId,
+                        participant_id: link.participant_id,
+                    },
+                });
+
+            if (!participantHasEvent) {
+                res.status(404).json({
+                    message: 'Eventet hittades inte.',
+                });
+                return;
+            }
+
+            const event = await prisma.event.findUnique({
+                where: { id: eventId },
+                select: { application_deadline: true },
+            });
+
+            if (!event) {
+                res.status(404).json({
+                    message: 'Eventet hittades inte.',
+                });
+                return;
+            }
+
+            if (now > event.application_deadline) {
                 res.status(400).json({
                     message: 'Anmälningstiden har gått ut.',
                 });
@@ -570,7 +929,7 @@ participantRoutes.put(
                 await prisma.travelOption.findFirst({
                     where: {
                         id: travelOptionId,
-                        event_id: link.event_id,
+                        event_id: eventId,
                         direction: 'TO_EVENT',
                     },
                 });
@@ -588,7 +947,7 @@ participantRoutes.put(
                     where: {
                         id: registrationId,
                         participant_id: link.participant_id,
-                        event_id: link.event_id,
+                        event_id: eventId,
                     },
                 });
 
