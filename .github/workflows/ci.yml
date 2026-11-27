@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    name: Tests, typecheck and build
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: "file:./ci.db"
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            Frontend/react/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix Frontend/react
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Typecheck backend
+        run: npx tsc --project Backend/tsconfig.json --noEmit
+
+      - name: Typecheck tests
+        run: npx tsc --project tests/tsconfig.json --noEmit
+
+      - name: Build frontend
+        run: npm run build
