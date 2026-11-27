@@ -132,42 +132,39 @@ export default function MyEventsPage({
 
     return (
         <div className="app">
+            <header className="my-events-header">
+                <div className="logo">
+                    CO<span>R</span>IDE
+                </div>
 
-            <h1>Mina event</h1>
+                <h1 className="my-events-page-title">Mina event</h1>
+            </header>
 
-            {data?.firstName && (
-                <h2>
-                    Hej {data.firstName}!
-                </h2>
-            )}
+            <main>
+                {data?.firstName && <h2>Hej {data.firstName}!</h2>}
 
-            {data?.events.length === 0 ? (
-                <p>
-                    Du har inga registrerade
-                    event.
-                </p>
-            ) : (
-                data?.events.map(event => (
-                    <article
-                        key={event.id}
-                        className="event-card"
-                    >
-                        <h3>{event.name}</h3>
+                {data?.events.length === 0 ? (
+                    <p>Du har inga registrerade event.</p>
+                ) : (
+                    data?.events.map(event => (
+                        <article key={event.id} className="event-card">
+                            <h2>{event.name}</h2>
+                            <p>{event.event_location}</p>
+                            <p>{formatDate(event.starts_at)}</p>
 
-                        <p>
-                            {event.event_location}
-                        </p>
-
-                        <p>
-                            {formatDate(
-                                event.starts_at
-                            )}
-                        </p>
-
-                    </article>
-                ))
-            )}
-
+                            <button
+                                className="secondary-button"
+                                onClick={() => {
+                                    window.location.href =
+                                        `/access/${encodeURIComponent(token)}/events/${event.id}`;
+                                }}
+                            >
+                                Visa event
+                            </button>
+                        </article>
+                    ))
+                )}
+            </main>
         </div>
     );
 }

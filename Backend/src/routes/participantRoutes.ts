@@ -1048,8 +1048,6 @@ participantRoutes.put(
 
             });
 
-
-
             res.json({
                 message: 'Anmälan har uppdaterats.',
             });

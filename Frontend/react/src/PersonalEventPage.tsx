@@ -121,23 +121,10 @@ export default function PersonalEventPage({token,eventId}: {
     return (
         <ParticipantPage
             token={token}
+            showMyEvents={outboundRegistrations.length > 0}
             firstName={!loading && !error && data ? data.firstName : undefined}
             event={!loading && !error && data ? data.event : undefined}
         >
-
-            {eventId && (
-                <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => {
-                        window.location.href =
-                            `/access/${encodeURIComponent(token)}/events`;
-                    }}
-                >
-                    Tillbaka till Mina event
-                </button>
-            )}
-
             {registrationMessage && (
                 <p role="status">{registrationMessage}</p>
             )}

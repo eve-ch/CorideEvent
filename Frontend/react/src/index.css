@@ -14,3 +14,59 @@ input,
 textarea {
   font: inherit;
 }
+
+/* Deltagarsidans header */
+.participant-page-header {
+  position: relative;
+  justify-content: space-between;
+}
+
+.participant-page-header .my-events-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 30px;
+  background: #eaf6fd;
+  color: #198bc3;
+  font-size: 18px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.participant-page-header .logo {
+  z-index: 1;
+}
+
+.participant-page-header .organizer-label {
+  z-index: 1;
+}
+
+/* "Mina event" sidan*/
+.my-events-header .my-events-page-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 22px;
+  border-radius: 30px;
+  background: #eaf6fd;
+  color: #198bc3;
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.my-events-header .logo {
+  z-index: 1;
+}
+
+/* Lite mer utrymme runt eventkorten */
+.my-events-main {
+  padding: 24px 32px;
+}
+
+.my-events-main .event-card {
+  margin-left: 8px;
+  margin-right: 8px;
+}

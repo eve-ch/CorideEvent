@@ -60,6 +60,14 @@ app.get('/access/:token', (_req, res) => {
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
+app.get('/access/:token/events', (_req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+app.get('/access/:token/events/:eventId', (_req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 app.get('/admin', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
 
