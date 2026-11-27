@@ -2,6 +2,8 @@
 import type { ReactNode } from 'react';
 
 type ParticipantPageProps = {
+    token: string;
+    showMyEvents: boolean;
     firstName?: string;
     event?: {
         name: string;
@@ -20,13 +22,26 @@ function formatDate(value: string) {
     }).format(new Date(value));
 }
 
-function ParticipantPage({firstName, event, children,}: ParticipantPageProps) {
+function ParticipantPage({token, showMyEvents, firstName, event, children,}: ParticipantPageProps) {
     return (
         <div className="app">
-            <header>
+            <header className="participant-page-header">
                 <div className="logo">
                     CO<span>R</span>IDE
                 </div>
+
+                {showMyEvents && (
+                    <button
+                        type="button"
+                        className="my-events-title"
+                        onClick={() => {
+                            window.location.href =
+                                `/access/${encodeURIComponent(token)}/events`;
+                        }}
+                    >
+                        Mina event
+                    </button>
+                )}
 
                 <span className="organizer-label">
                     Deltagare

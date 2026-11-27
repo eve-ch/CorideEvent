@@ -36,14 +36,20 @@ function formatDate(value: string) {
     }).format(new Date(value));
 }
 
-export default function PersonalEventPage({token}: { token: string }) {
+export default function PersonalEventPage({token,eventId}: {
+    token: string;
+    eventId?: string;
+}) {
     const [data, setData] = useState<PersonalEventData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [registrationMessage, setRegistrationMessage] = useState('');
     const [reload, setReload] = useState(0);
     const [editingRegistration, setEditingRegistration] =
-        useState<RegistrationData | null>(null);
+        useState<{
+            outbound: RegistrationData;
+            returnRegistration?: RegistrationData;
+        } | null>(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -54,13 +60,14 @@ export default function PersonalEventPage({token}: { token: string }) {
             setData(null);
 
             try {
-                const response = await fetch(
-                    `/api/events/access/${encodeURIComponent(token)}`,
-                    {
-                        signal: controller.signal,
-                        cache: 'no-store',
-                    }
-                );
+                const url = eventId
+                    ? `/api/events/access/${encodeURIComponent(token)}/events/${eventId}`
+                    : `/api/events/access/${encodeURIComponent(token)}`;
+
+                const response = await fetch(url, {
+                    signal: controller.signal,
+                    cache: 'no-store',
+                });
 
                 if (!response.ok) {
                     if (response.status === 404) {
@@ -99,14 +106,22 @@ export default function PersonalEventPage({token}: { token: string }) {
         loadPage();
 
         return () => controller.abort();
-    }, [token, reload]);
+    }, [token, eventId, reload]);
 
     const outboundRegistrations = data?.registrations.filter(
         registration => registration.travel_option.direction === 'TO_EVENT'
     ) ?? [];
 
+    const returnRegistrations =
+        data?.registrations.filter(
+            registration =>
+                registration.travel_option.direction === 'FROM_EVENT'
+        ) ?? [];
+
     return (
         <ParticipantPage
+            token={token}
+            showMyEvents={outboundRegistrations.length > 0}
             firstName={!loading && !error && data ? data.firstName : undefined}
             event={!loading && !error && data ? data.event : undefined}
         >
@@ -137,14 +152,23 @@ export default function PersonalEventPage({token}: { token: string }) {
 
                         <ParticipantForm
                             token={token}
-                            registrationId={editingRegistration.id}
-                            initialRole={editingRegistration.role}
+                            eventId={eventId}
+                            registrationId={editingRegistration.outbound.id}
+                            initialRole={editingRegistration.outbound.role}
                             initialTravelOptionId={
-                                editingRegistration.travel_option.id
+                                editingRegistration.outbound.travel_option.id
                             }
                             initialOfferedSeats={
-                                editingRegistration.offered_seats
+                                editingRegistration.outbound.offered_seats
                             }
+                            initialWantsReturnTrip={
+                                !!editingRegistration.returnRegistration
+                            }
+                            initialReturnOfferedSeats={
+                                editingRegistration.returnRegistration
+                                    ?.offered_seats ?? null
+                            }
+
                             travelOptions={data.event.travel_options}
                             onCreated={() => {
                                 setEditingRegistration(null);
@@ -162,6 +186,7 @@ export default function PersonalEventPage({token}: { token: string }) {
                         <article className="event-card detail-card">
                             <h2>Din samåkningsanmälan</h2>
 
+                            <h3>Till eventet</h3>
                             {outboundRegistrations.map(registration => (
                                 <div key={registration.id}>
 
@@ -195,6 +220,44 @@ export default function PersonalEventPage({token}: { token: string }) {
                                             </>
                                         )}
 
+
+                                        <h3>Hem från eventet</h3>
+
+                                        {(() => {
+                                            const returnRegistration = returnRegistrations.find(
+                                                r => r.travel_option.direction === 'FROM_EVENT'
+                                            );
+
+                                            if (!returnRegistration) {
+                                                return (
+                                                    <>
+                                                        <dt>Hemresa</dt>
+                                                        <dd>Ingen hemresa anmäld</dd>
+                                                    </>
+                                                );
+                                            }
+
+                                            return (
+                                                <>
+                                                    <dt>Hemresa</dt>
+                                                    <dd>
+                                                        {returnRegistration.role === 'PASSENGER'
+                                                            ? 'Anmäld hemresa'
+                                                            : 'Anmäld hemresa som förare'}
+                                                    </dd>
+
+                                                    {returnRegistration.role === 'DRIVER' && (
+                                                        <>
+                                                            <dt>Erbjudna platser</dt>
+                                                            <dd>
+                                                                {returnRegistration.offered_seats}
+                                                            </dd>
+                                                        </>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+
                                         <dt>Status</dt>
                                         <dd>
                                             {registration.status === 'REGISTERED'
@@ -213,7 +276,13 @@ export default function PersonalEventPage({token}: { token: string }) {
                                         <button
                                             className="secondary-button"
                                             onClick={() => {
-                                                setEditingRegistration(registration);
+
+                                                const returnRegistration = returnRegistrations[0];
+
+                                                setEditingRegistration({
+                                                    outbound: registration,
+                                                    returnRegistration,
+                                                });
                                             }}
                                         >
                                             Redigera
@@ -279,6 +348,7 @@ export default function PersonalEventPage({token}: { token: string }) {
 
                                 </div>
                             ))}
+
                         </article>
                     ) : (
                         <article className="event-card">
@@ -286,6 +356,7 @@ export default function PersonalEventPage({token}: { token: string }) {
 
                             <ParticipantForm
                                 token={token}
+                                eventId={eventId}
                                 travelOptions={data.event.travel_options}
                                 onCreated={() => {
                                     setRegistrationMessage(

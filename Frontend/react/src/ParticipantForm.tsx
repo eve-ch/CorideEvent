@@ -14,10 +14,13 @@ type ParticipantFormProps = {
     onCreated: () => void;
     onCancel: () => void;
 
+    eventId?: string;
     registrationId?: string;
     initialRole?: string;
     initialTravelOptionId?: string;
     initialOfferedSeats?: number | null;
+    initialWantsReturnTrip?: boolean;
+    initialReturnOfferedSeats?: number | null;
 };
 
 function ParticipantForm({
@@ -25,14 +28,21 @@ function ParticipantForm({
                              travelOptions,
                              onCreated,
                              onCancel,
+                             eventId,
                              registrationId,
                              initialRole,
                              initialTravelOptionId,
                              initialOfferedSeats,
+                             initialReturnOfferedSeats,
+                             initialWantsReturnTrip
                          }: ParticipantFormProps) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [role, setRole] = useState(initialRole ?? 'PASSENGER');
+    const [wantsReturnTrip, setWantsReturnTrip] = useState(initialWantsReturnTrip ?? false);
+
+    const [returnOfferedSeats, setReturnOfferedSeats] =
+        useState(String(initialReturnOfferedSeats ?? 1));
 
     const submitting = useRef(false);
 
@@ -63,16 +73,18 @@ function ParticipantForm({
             return;
         }
 
+        const returnSeats = Number(returnOfferedSeats);
+
         if (
+            wantsReturnTrip &&
             role === 'DRIVER' &&
             (
-                offeredSeats === null ||
-                !Number.isInteger(offeredSeats) ||
-                offeredSeats < 1 ||
-                offeredSeats > 15
+                !Number.isInteger(returnSeats) ||
+                returnSeats < 1 ||
+                returnSeats > 15
             )
         ) {
-            setError('Antal platser måste vara mellan 1 och 15.');
+            setError('Antal platser på hemresan måste vara mellan 1 och 15.');
             return;
         }
 
@@ -89,11 +101,19 @@ function ParticipantForm({
                     headers: {
                         'Content-Type': 'application/json',
                     },
+
                     body: JSON.stringify({
+                        eventId,
                         travelOptionId: travelOption,
                         role,
                         offeredSeats,
-                    }),
+                        wantsReturnTrip,
+
+                        returnOfferedSeats:
+                            wantsReturnTrip && role === 'DRIVER'
+                                ? Number(returnOfferedSeats)
+                                : null,
+                    })
                 }
             );
 
@@ -206,6 +226,61 @@ function ParticipantForm({
                         min="1"
                         max="15"
                         defaultValue={initialOfferedSeats ?? 1}
+                        required
+                    />
+                </div>
+            )}
+
+            <h3>Hemresa</h3>
+
+            <div>
+                <label>
+                    Jag vill samåka hem efter eventet *
+                </label>
+
+                <div className="role-selector">
+                    <button
+                        type="button"
+                        className={
+                            wantsReturnTrip
+                                ? 'role-card selected'
+                                : 'role-card'
+                        }
+                        onClick={() => setWantsReturnTrip(true)}
+                    >
+                        Ja
+                    </button>
+
+                    <button
+                        type="button"
+                        className={
+                            !wantsReturnTrip
+                                ? 'role-card selected'
+                                : 'role-card'
+                        }
+                        onClick={() => setWantsReturnTrip(false)}
+                    >
+                        Nej
+                    </button>
+                </div>
+            </div>
+
+            {role === 'DRIVER' && wantsReturnTrip && (
+                <div>
+                    <label htmlFor="returnOfferedSeats">
+                        Antal passagerarplatser på hemresan *
+                    </label>
+
+                    <input
+                        id="returnOfferedSeats"
+                        name="returnOfferedSeats"
+                        type="number"
+                        min="1"
+                        max="15"
+                        value={returnOfferedSeats}
+                        onChange={(e) =>
+                            setReturnOfferedSeats(e.target.value)
+                        }
                         required
                     />
                 </div>
