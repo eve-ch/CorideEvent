@@ -152,8 +152,9 @@ eventRoutes.post('/', async (req, res) => {
                             ),
                             direction: 'TO_EVENT',
                         },
+                        /////////////////////////////
                         {
-                            place_name: 'Standardstartplats – testalternativ',
+                            place_name: location,
                             departure_time: new Date(
                                 startsAt.getTime() + 4 * 60 * 60 * 1000
                             ),

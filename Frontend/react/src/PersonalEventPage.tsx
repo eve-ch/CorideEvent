@@ -220,42 +220,42 @@ export default function PersonalEventPage({token,eventId}: {
                                             </>
                                         )}
 
+
                                         <h3>Hem från eventet</h3>
-                                        <dt>Roll</dt>
-                                        <dd>
-                                            {registration.role === 'DRIVER'
-                                                ? 'Förare'
-                                                : 'Passagerare'}
-                                        </dd>
 
                                         {(() => {
                                             const returnRegistration = returnRegistrations.find(
-                                                r =>
-                                                    r.travel_option.place_name ===
-                                                    registration.travel_option.place_name
+                                                r => r.travel_option.direction === 'FROM_EVENT'
                                             );
 
                                             if (!returnRegistration) {
                                                 return (
                                                     <>
                                                         <dt>Hemresa</dt>
-                                                        <dd>Ingen hemresa registrerad</dd>
+                                                        <dd>Ingen hemresa anmäld</dd>
                                                     </>
                                                 );
                                             }
 
-                                            if (returnRegistration.role === 'DRIVER') {
-                                                return (
-                                                    <>
-                                                        <dt>Erbjudna platser</dt>
-                                                        <dd>
-                                                            {returnRegistration.offered_seats}
-                                                        </dd>
-                                                    </>
-                                                );
-                                            }
+                                            return (
+                                                <>
+                                                    <dt>Hemresa</dt>
+                                                    <dd>
+                                                        {returnRegistration.role === 'PASSENGER'
+                                                            ? 'Anmäld hemresa'
+                                                            : 'Anmäld hemresa som förare'}
+                                                    </dd>
 
-                                            return null;
+                                                    {returnRegistration.role === 'DRIVER' && (
+                                                        <>
+                                                            <dt>Erbjudna platser</dt>
+                                                            <dd>
+                                                                {returnRegistration.offered_seats}
+                                                            </dd>
+                                                        </>
+                                                    )}
+                                                </>
+                                            );
                                         })()}
 
                                         <dt>Status</dt>
@@ -277,12 +277,7 @@ export default function PersonalEventPage({token,eventId}: {
                                             className="secondary-button"
                                             onClick={() => {
 
-                                                const returnRegistration =
-                                                    returnRegistrations.find(
-                                                        r =>
-                                                            r.travel_option.place_name ===
-                                                            registration.travel_option.place_name
-                                                    );
+                                                const returnRegistration = returnRegistrations[0];
 
                                                 setEditingRegistration({
                                                     outbound: registration,
