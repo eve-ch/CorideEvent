@@ -410,9 +410,6 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
 
         return;
     }
-
-    console.log('offeredSeats:', body.offeredSeats);
-    console.log('typeof:', typeof body.offeredSeats);
     
     if (
         role === 'DRIVER' &&
@@ -814,11 +811,10 @@ participantRoutes.put(
                 returnOfferedSeats < 1 ||
                 returnOfferedSeats > 15
             )
-        )
-        {
+        ) {
             res.status(400).json({
                 message:
-                    'Antal platser måste vara ett heltal mellan 1 och 15.',
+                    'Antal platser på hemresan måste vara mellan 1 och 15.',
             });
             return;
         }
@@ -958,16 +954,101 @@ participantRoutes.put(
                 return;
             }
 
-            await prisma.rideRegistration.update({
-                where: {
-                    id: registrationId,
-                },
-                data: {
-                    role,
-                    offered_seats: offeredSeats,
-                    travel_option_id: travelOptionId,
-                },
+
+            const returnTravelOption = wantsReturnTrip
+                ? await prisma.travelOption.findFirst({
+                    where: {
+                        event_id: link.event_id,
+                        place_name: travelOption.place_name,
+                        direction: 'FROM_EVENT',
+                    },
+                })
+                : null;
+
+
+            if (wantsReturnTrip && !returnTravelOption) {
+                res.status(400).json({
+                    message: 'Det finns inget giltigt hemresealternativ för vald startplats.',
+                });
+                return;
+            }
+
+            await prisma.$transaction(async (transaction) => {
+
+                // Uppdatera utresan
+                await transaction.rideRegistration.update({
+                    where: {
+                        id: registrationId,
+                    },
+                    data: {
+                        role,
+                        offered_seats: offeredSeats,
+                        travel_option_id: travelOptionId,
+                    },
+                });
+
+                // Hitta eventuell befintlig hemresa
+                const returnRegistration =
+                    await transaction.rideRegistration.findFirst({
+                        where: {
+                            participant_id: link.participant_id,
+                            event_id: eventId,
+                            travel_option: {
+                                direction: 'FROM_EVENT',
+                                place_name: travelOption.place_name,
+                            },
+                        },
+                    });
+
+                if (wantsReturnTrip && returnTravelOption) {
+
+                    const returnData = {
+                        role,
+                        offered_seats:
+                            role === 'DRIVER'
+                                ? returnOfferedSeats
+                                : null,
+                        travel_option_id: returnTravelOption.id,
+                    };
+
+                    if (returnRegistration) {
+
+                        // Uppdatera befintlig hemresa
+                        await transaction.rideRegistration.update({
+                            where: {
+                                id: returnRegistration.id,
+                            },
+                            data: returnData,
+                        });
+
+                    } else {
+
+                        // Skapa hemresa om den saknas
+                        await transaction.rideRegistration.create({
+                            data: {
+                                event_id: eventId,
+                                participant_id: link.participant_id,
+                                ...returnData,
+                                status: 'REGISTERED',
+                            },
+                        });
+
+                    }
+
+                } else if (returnRegistration) {
+
+                    // Ta bort hemresan om deltagaren väljer Nej
+                    await transaction.rideRegistration.delete({
+                        where: {
+                            id: returnRegistration.id,
+                        },
+                    });
+
+                }
+
             });
+
+
 
             res.json({
                 message: 'Anmälan har uppdaterats.',

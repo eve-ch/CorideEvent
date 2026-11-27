@@ -19,6 +19,8 @@ type ParticipantFormProps = {
     initialRole?: string;
     initialTravelOptionId?: string;
     initialOfferedSeats?: number | null;
+    initialWantsReturnTrip?: boolean;
+    initialReturnOfferedSeats?: number | null;
 };
 
 function ParticipantForm({
@@ -31,14 +33,16 @@ function ParticipantForm({
                              initialRole,
                              initialTravelOptionId,
                              initialOfferedSeats,
+                             initialReturnOfferedSeats,
+                             initialWantsReturnTrip
                          }: ParticipantFormProps) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [role, setRole] = useState(initialRole ?? 'PASSENGER');
-    const [wantsReturnTrip, setWantsReturnTrip] = useState(false);
-    const [returnOfferedSeats, setReturnOfferedSeats] = useState(
-        initialOfferedSeats ?? 1
-    );
+    const [wantsReturnTrip, setWantsReturnTrip] = useState(initialWantsReturnTrip ?? false);
+
+    const [returnOfferedSeats, setReturnOfferedSeats] =
+        useState(initialReturnOfferedSeats ?? 1);
 
     const submitting = useRef(false);
 

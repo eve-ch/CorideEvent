@@ -46,7 +46,10 @@ export default function PersonalEventPage({token,eventId}: {
     const [registrationMessage, setRegistrationMessage] = useState('');
     const [reload, setReload] = useState(0);
     const [editingRegistration, setEditingRegistration] =
-        useState<RegistrationData | null>(null);
+        useState<{
+            outbound: RegistrationData;
+            returnRegistration?: RegistrationData;
+        } | null>(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -109,6 +112,12 @@ export default function PersonalEventPage({token,eventId}: {
         registration => registration.travel_option.direction === 'TO_EVENT'
     ) ?? [];
 
+    const returnRegistrations =
+        data?.registrations.filter(
+            registration =>
+                registration.travel_option.direction === 'FROM_EVENT'
+        ) ?? [];
+
     return (
         <ParticipantPage
             token={token}
@@ -157,14 +166,22 @@ export default function PersonalEventPage({token,eventId}: {
                         <ParticipantForm
                             token={token}
                             eventId={eventId}
-                            registrationId={editingRegistration.id}
-                            initialRole={editingRegistration.role}
+                            registrationId={editingRegistration.outbound.id}
+                            initialRole={editingRegistration.outbound.role}
                             initialTravelOptionId={
-                                editingRegistration.travel_option.id
+                                editingRegistration.outbound.travel_option.id
                             }
                             initialOfferedSeats={
-                                editingRegistration.offered_seats
+                                editingRegistration.outbound.offered_seats
                             }
+                            initialWantsReturnTrip={
+                                !!editingRegistration.returnRegistration
+                            }
+                            initialReturnOfferedSeats={
+                                editingRegistration.returnRegistration
+                                    ?.offered_seats ?? null
+                            }
+
                             travelOptions={data.event.travel_options}
                             onCreated={() => {
                                 setEditingRegistration(null);
@@ -182,6 +199,7 @@ export default function PersonalEventPage({token,eventId}: {
                         <article className="event-card detail-card">
                             <h2>Din samåkningsanmälan</h2>
 
+                            <h3>Till eventet</h3>
                             {outboundRegistrations.map(registration => (
                                 <div key={registration.id}>
 
@@ -215,6 +233,44 @@ export default function PersonalEventPage({token,eventId}: {
                                             </>
                                         )}
 
+                                        <h3>Hem från eventet</h3>
+                                        <dt>Roll</dt>
+                                        <dd>
+                                            {registration.role === 'DRIVER'
+                                                ? 'Förare'
+                                                : 'Passagerare'}
+                                        </dd>
+
+                                        {(() => {
+                                            const returnRegistration = returnRegistrations.find(
+                                                r =>
+                                                    r.travel_option.place_name ===
+                                                    registration.travel_option.place_name
+                                            );
+
+                                            if (!returnRegistration) {
+                                                return (
+                                                    <>
+                                                        <dt>Hemresa</dt>
+                                                        <dd>Ingen hemresa registrerad</dd>
+                                                    </>
+                                                );
+                                            }
+
+                                            if (returnRegistration.role === 'DRIVER') {
+                                                return (
+                                                    <>
+                                                        <dt>Erbjudna platser</dt>
+                                                        <dd>
+                                                            {returnRegistration.offered_seats}
+                                                        </dd>
+                                                    </>
+                                                );
+                                            }
+
+                                            return null;
+                                        })()}
+
                                         <dt>Status</dt>
                                         <dd>
                                             {registration.status === 'REGISTERED'
@@ -233,7 +289,18 @@ export default function PersonalEventPage({token,eventId}: {
                                         <button
                                             className="secondary-button"
                                             onClick={() => {
-                                                setEditingRegistration(registration);
+
+                                                const returnRegistration =
+                                                    returnRegistrations.find(
+                                                        r =>
+                                                            r.travel_option.place_name ===
+                                                            registration.travel_option.place_name
+                                                    );
+
+                                                setEditingRegistration({
+                                                    outbound: registration,
+                                                    returnRegistration,
+                                                });
                                             }}
                                         >
                                             Redigera
@@ -299,6 +366,7 @@ export default function PersonalEventPage({token,eventId}: {
 
                                 </div>
                             ))}
+
                         </article>
                     ) : (
                         <article className="event-card">
