@@ -1,6 +1,8 @@
 import {Router} from 'express';
 import {prisma} from '../prisma';
 import { createHash } from 'node:crypto';
+import {isValidAccessToken, isAccessLinkExpired,} from '../validation/accessLinkValidation';
+import { validateRegistration } from '../validation/registrationValidation';
 
 export const participantRoutes = Router();
 
@@ -9,7 +11,7 @@ participantRoutes.get('/access/:token', async (req, res) => {
 
     const token = req.params.token;
 
-    if (!/^[a-f0-9]{64}$/.test(token)) {
+    if (!isValidAccessToken(token)) {
         res.status(404).json({
             message: 'Den personliga länken är ogiltig.',
         });
@@ -65,10 +67,7 @@ participantRoutes.get('/access/:token', async (req, res) => {
             return;
         }
 
-        if (
-            link.revoked_at !== null ||
-            link.expires_at <= new Date()
-        ) {
+        if (isAccessLinkExpired(link, new Date())) {
             res.status(410).json({
                 message: 'Den personliga länken gäller inte längre.',
             });
@@ -120,60 +119,23 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
     const token = req.params.token;
     const body = req.body;
 
-    if (!/^[a-f0-9]{64}$/.test(token)) {
+    if (!isValidAccessToken(token)) {
         res.status(404).json({
             message: 'Den personliga länken är ogiltig.',
         });
         return;
     }
 
-    if (
-        !body ||
-        typeof body.travelOptionId !== 'string' ||
-        typeof body.role !== 'string'
-    ) {
+    const validation = validateRegistration(body);
+
+    if (validation.valid === false) {
         res.status(400).json({
-            message: 'Anmälans uppgifter är ogiltiga.',
+            message: validation.message,
         });
         return;
     }
 
-    const travelOptionId = body.travelOptionId.trim();
-    const role = body.role;
-
-    if (!travelOptionId) {
-        res.status(400).json({
-            message: 'Välj ett resealternativ.',
-        });
-        return;
-    }
-
-    if (
-        role !== 'DRIVER' &&
-        role !== 'PASSENGER'
-    ) {
-        res.status(400).json({
-            message: 'Ogiltig roll.',
-        });
-        return;
-    }
-
-    if (
-        role === 'DRIVER' &&
-        (
-            typeof body.offeredSeats !== 'number' ||
-            !Number.isInteger(body.offeredSeats) ||
-            body.offeredSeats < 1 ||
-            body.offeredSeats > 15
-        )
-    ) {
-        res.status(400).json({
-            message: 'Antal platser måste vara ett heltal mellan 1 och 15.',
-        });
-        return;
-    }
-
-    const offeredSeats = role === 'DRIVER' ? body.offeredSeats : null;
+    const { travelOptionId, role, offeredSeats } = validation.data;
 
     try {
         const tokenHash = createHash('sha256')
@@ -207,7 +169,7 @@ participantRoutes.post('/access/:token/registrations', async (req, res) => {
 
             const now = new Date();
 
-            if (link.revoked_at !== null || link.expires_at <= now) {
+            if (isAccessLinkExpired(link, now)) {
                 return {
                     status: 410,
                     body: {
@@ -295,7 +257,7 @@ participantRoutes.delete(
     async (req, res) => {
         const token = req.params.token;
 
-        if (!/^[a-f0-9]{64}$/.test(token)) {
+        if (!isValidAccessToken(token)) {
             res.status(404).json({
                 message: 'Den personliga länken är ogiltig.',
             });
@@ -332,10 +294,7 @@ participantRoutes.delete(
 
             const now = new Date();
 
-            if (
-                link.revoked_at !== null ||
-                link.expires_at <= now
-            ) {
+            if (isAccessLinkExpired(link, now)) {
                 res.status(410).json({
                     message: 'Den personliga länken gäller inte längre.',
                 });
@@ -396,64 +355,23 @@ participantRoutes.put(
         const registrationId = req.params.registrationId;
         const body = req.body;
 
-        if (!/^[a-f0-9]{64}$/.test(token)) {
+        if (!isValidAccessToken(token)) {
             res.status(404).json({
                 message: 'Den personliga länken är ogiltig.',
             });
             return;
         }
 
-        if (
-            !body ||
-            typeof body.travelOptionId !== 'string' ||
-            typeof body.role !== 'string'
-        ) {
+        const validation = validateRegistration(body);
+
+        if (validation.valid === false) {
             res.status(400).json({
-                message: 'Anmälans uppgifter är ogiltiga.',
+                message: validation.message,
             });
             return;
         }
 
-        const travelOptionId = body.travelOptionId.trim();
-        const role = body.role;
-
-        if (!travelOptionId) {
-            res.status(400).json({
-                message: 'Välj ett resealternativ.',
-            });
-            return;
-        }
-
-        if (
-            role !== 'DRIVER' &&
-            role !== 'PASSENGER'
-        ) {
-            res.status(400).json({
-                message: 'Ogiltig roll.',
-            });
-            return;
-        }
-
-        if (
-            role === 'DRIVER' &&
-            (
-                typeof body.offeredSeats !== 'number' ||
-                !Number.isInteger(body.offeredSeats) ||
-                body.offeredSeats < 1 ||
-                body.offeredSeats > 15
-            )
-        ) {
-            res.status(400).json({
-                message:
-                    'Antal platser måste vara ett heltal mellan 1 och 15.',
-            });
-            return;
-        }
-
-        const offeredSeats =
-            role === 'DRIVER'
-                ? body.offeredSeats
-                : null;
+        const { travelOptionId, role, offeredSeats } = validation.data;
 
         try {
             const tokenHash = createHash('sha256')
@@ -487,10 +405,7 @@ participantRoutes.put(
 
             const now = new Date();
 
-            if (
-                link.revoked_at !== null ||
-                link.expires_at <= now
-            ) {
+            if (isAccessLinkExpired(link, now)) {
                 res.status(410).json({
                     message:
                         'Den personliga länken gäller inte längre.',

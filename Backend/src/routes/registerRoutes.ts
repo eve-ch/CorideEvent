@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
 import { randomBytes, createHash } from 'node:crypto';
+import { calculateAccessLinkExpiry } from '../validation/accessLinkValidation';
 
 export const registerRoutes = Router();
 
@@ -70,10 +71,7 @@ registerRoutes.post(
             }
 
             // Tillfällig tolkning: sju dygn efter eventets start.
-            const expiresAt = new Date(
-                event.starts_at.getTime() +
-                7 * 24 * 60 * 60 * 1000
-            );
+            const expiresAt = calculateAccessLinkExpiry(event.starts_at);
 
             if (expiresAt <= new Date()) {
                 res.status(410).json({
